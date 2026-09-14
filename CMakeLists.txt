@@ -65,6 +65,7 @@ set(foundation_sources
 	src/NSDecimal.m
 	src/NSDecimalNumber.m
 	src/NSDictionary.m
+	src/NSDictionaryOfVariableBindings.m
 	src/NSDirectoryEnumerator.m
 	src/NSDistributedLock.m
 	src/NSDistributedNotificationCenter.m
