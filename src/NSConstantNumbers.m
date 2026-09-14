@@ -37,6 +37,11 @@ struct __NSConstantDoubleNumberLayout {
 
 // Accessors shared by all constant number classes; `VALUE` is the stored value.
 #define CONSTANT_NUMBER_ACCESSORS(VALUE) \
+CONSTANT_NUMBER_COMMON_ACCESSORS(VALUE) \
+- (float)floatValue { return (float)(VALUE); } \
+- (double)doubleValue { return (double)(VALUE); }
+
+#define CONSTANT_NUMBER_COMMON_ACCESSORS(VALUE) \
 - (char)charValue { return (char)(VALUE); } \
 - (unsigned char)unsignedCharValue { return (unsigned char)(VALUE); } \
 - (short)shortValue { return (short)(VALUE); } \
@@ -49,8 +54,6 @@ struct __NSConstantDoubleNumberLayout {
 - (unsigned long long)unsignedLongLongValue { return (unsigned long long)(VALUE); } \
 - (NSInteger)integerValue { return (NSInteger)(VALUE); } \
 - (NSUInteger)unsignedIntegerValue { return (NSUInteger)(VALUE); } \
-- (float)floatValue { return (float)(VALUE); } \
-- (double)doubleValue { return (double)(VALUE); } \
 - (BOOL)boolValue { return (VALUE) != 0; } \
 - (id)copyWithZone:(NSZone *)zone { return self; } \
 - (CFTypeID)_cfTypeID { return CFNumberGetTypeID(); } \
@@ -81,7 +84,36 @@ __attribute__((visibility("default")))
 
 SINGLETON_RR()
 
-CONSTANT_NUMBER_ACCESSORS(INTEGER_LAYOUT(self)->value)
+CONSTANT_NUMBER_COMMON_ACCESSORS(INTEGER_LAYOUT(self)->value)
+
+// clang stores unsigned literals (encodings C, S, I, L, Q) as their 64-bit pattern, so values
+// from 2^63 up read back negative as long long; convert them as unsigned.
+static BOOL integerEncodingIsUnsigned(const char *encoding)
+{
+    switch (encoding[0])
+    {
+        case 'C':
+        case 'S':
+        case 'I':
+        case 'L':
+        case 'Q':
+            return YES;
+        default:
+            return NO;
+    }
+}
+
+- (float)floatValue
+{
+    long long value = INTEGER_LAYOUT(self)->value;
+    return integerEncodingIsUnsigned(INTEGER_LAYOUT(self)->encoding) ? (float)(unsigned long long)value : (float)value;
+}
+
+- (double)doubleValue
+{
+    long long value = INTEGER_LAYOUT(self)->value;
+    return integerEncodingIsUnsigned(INTEGER_LAYOUT(self)->encoding) ? (double)(unsigned long long)value : (double)value;
+}
 
 - (const char *)objCType
 {
