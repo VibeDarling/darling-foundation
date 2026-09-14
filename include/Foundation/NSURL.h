@@ -123,6 +123,7 @@ typedef NSUInteger NSURLBookmarkFileCreationOptions;
 }
 
 + (id)fileURLWithPath:(NSString *)path isDirectory:(BOOL) isDir;
++ (id)fileURLWithPath:(NSString *)path isDirectory:(BOOL)isDir relativeToURL:(NSURL *)baseURL;
 + (id)fileURLWithPath:(NSString *)path;
 + (id)fileURLWithFileSystemRepresentation:(const char *)path isDirectory:(BOOL)isDir relativeToURL:(NSURL *)baseURL;
 + (id)URLWithString:(NSString *)URLString;
@@ -133,6 +134,7 @@ typedef NSUInteger NSURLBookmarkFileCreationOptions;
 + (NSData *)bookmarkDataWithContentsOfURL:(NSURL *)bookmarkFileURL error:(NSError **)error;
 - (id)initWithScheme:(NSString *)scheme host:(NSString *)host path:(NSString *)path;
 - (id)initFileURLWithPath:(NSString *)path isDirectory:(BOOL)isDir;
+- (id)initFileURLWithPath:(NSString *)path isDirectory:(BOOL)isDir relativeToURL:(NSURL *)baseURL;
 - (id)initFileURLWithPath:(NSString *)path;
 - (id)initWithString:(NSString *)URLString;
 - (id)initWithString:(NSString *)URLString relativeToURL:(NSURL *)baseURL;

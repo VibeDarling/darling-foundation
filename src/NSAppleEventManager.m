@@ -24,6 +24,17 @@ static NSAppleEventManager* instance = nil;
     NSLog(@"Stub called: %@ in %@", NSStringFromSelector([anInvocation selector]), [self class]);
 }
 
+// Darling doesn't dispatch Apple events through NSAppleEventManager, so no event is ever being handled.
+- (NSAppleEventDescriptor *)currentAppleEvent
+{
+    return nil;
+}
+
+- (NSAppleEventDescriptor *)currentReplyAppleEvent
+{
+    return nil;
+}
+
 - (void) setEventHandler: (id) handler
              andSelector: (SEL) selector
            forEventClass: (AEEventClass) eventClass

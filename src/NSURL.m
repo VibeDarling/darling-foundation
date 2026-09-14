@@ -87,6 +87,22 @@ OBJC_PROTOCOL_IMPL_PUSH
 
     return self;
 }
+
+- (id)initFileURLWithPath:(NSString *)path isDirectory:(BOOL)isDir relativeToURL:(NSURL *)baseURL
+{
+    if (baseURL == nil || [path isAbsolutePath])
+    {
+        return [self initFileURLWithPath:path isDirectory:isDir];
+    }
+    if ([path length] == 0)
+    {
+        [self release];
+        return nil;
+    }
+    [self release];
+    self = (NSURL*) CFURLCreateWithFileSystemPathRelativeToBase(kCFAllocatorDefault, (CFStringRef)path, kCFURLPOSIXPathStyle, isDir, (CFURLRef)baseURL);
+    return self;
+}
 OBJC_PROTOCOL_IMPL_POP
 
 - (id)initFileURLWithFileSystemRepresentation:(const char *)path isDirectory:(BOOL)isDir relativeToURL:(NSURL *)baseURL
@@ -129,6 +145,11 @@ OBJC_PROTOCOL_IMPL_PUSH
 + (id)fileURLWithPath:(NSString *)path isDirectory:(BOOL)isDir
 {
     return [[[self alloc] initFileURLWithPath:path isDirectory:isDir] autorelease];
+}
+
++ (id)fileURLWithPath:(NSString *)path isDirectory:(BOOL)isDir relativeToURL:(NSURL *)baseURL
+{
+    return [[[self alloc] initFileURLWithPath:path isDirectory:isDir relativeToURL:baseURL] autorelease];
 }
 
 + (id)fileURLWithPath:(NSString *)path
