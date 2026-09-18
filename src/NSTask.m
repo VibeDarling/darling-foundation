@@ -527,17 +527,17 @@ static void waiterCallback(void* info) {
 
 		posix_spawn_file_actions_init(&actions);
 
-		if (cStdin != -1) {
+		if (cStdin != -1 && cStdin != 0) {
 			posix_spawn_file_actions_addclose(&actions, 0);
 			posix_spawn_file_actions_adddup2(&actions, cStdin, 0);
 		}
 
-		if (cStdout != -1) {
+		if (cStdout != -1 && cStdout != 1) {
 			posix_spawn_file_actions_addclose(&actions, 1);
 			posix_spawn_file_actions_adddup2(&actions, cStdout, 1);
 		}
 
-		if (cStderr != -1) {
+		if (cStderr != -1 && cStderr != 2) {
 			posix_spawn_file_actions_addclose(&actions, 2);
 			posix_spawn_file_actions_adddup2(&actions, cStderr, 2);
 		}
@@ -561,13 +561,15 @@ static void waiterCallback(void* info) {
 		os_log_debug(nstask_get_log(), "going to spawn process %s", cArgs[0]);
 
 		// alright, it's finally time to start the process
-		spawned = posix_spawn(&_pid, cArgs[0], &actions, &attrs, cArgs, cEnv) == 0;
+		int spawn_rc = posix_spawn(&_pid, cArgs[0], &actions, &attrs, cArgs, cEnv);
+		fprintf(stderr, "NSTASK_DEBUG: posix_spawn rc=%d errno=%d path=%s\n", spawn_rc, errno, cArgs[0]);
+		spawned = (spawn_rc == 0);
 		savedErrno = errno;
 
 		// do some cleanup regardless of whether we failed or not
-		[stdin closeFile];
-		[stdout closeFile];
-		[stderr closeFile];
+		// Only close handles that NSTask owns (pipes it created), not caller-supplied handles.
+		// Caller-supplied handles (including the standard I/O singletons) must be managed by the caller.
+		// NSTask never takes ownership of standardInput/standardOutput/standardError.
 
 		posix_spawn_file_actions_destroy(&actions);
 		posix_spawnattr_destroy(&attrs);
