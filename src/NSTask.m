@@ -562,14 +562,23 @@ static void waiterCallback(void* info) {
 
 		// alright, it's finally time to start the process
 		int spawn_rc = posix_spawn(&_pid, cArgs[0], &actions, &attrs, cArgs, cEnv);
-		fprintf(stderr, "NSTASK_DEBUG: posix_spawn rc=%d errno=%d path=%s\n", spawn_rc, errno, cArgs[0]);
 		spawned = (spawn_rc == 0);
-		savedErrno = errno;
+		savedErrno = spawned ? 0 : spawn_rc;
 
 		// do some cleanup regardless of whether we failed or not
-		// Only close handles that NSTask owns (pipes it created), not caller-supplied handles.
-		// Caller-supplied handles (including the standard I/O singletons) must be managed by the caller.
-		// NSTask never takes ownership of standardInput/standardOutput/standardError.
+		// If the caller supplied an NSPipe, close the child-side handle in the parent process
+		// so that readDataToEndOfFile gets EOF when the child terminates.
+		// If the caller supplied an NSFileHandle (including standard I/O singletons),
+		// do not close it — caller retains ownership.
+		if ([info[kStdin] isKindOfClass: [NSPipe class]]) {
+			[stdin closeFile];
+		}
+		if ([info[kStdout] isKindOfClass: [NSPipe class]]) {
+			[stdout closeFile];
+		}
+		if ([info[kStderr] isKindOfClass: [NSPipe class]]) {
+			[stderr closeFile];
+		}
 
 		posix_spawn_file_actions_destroy(&actions);
 		posix_spawnattr_destroy(&attrs);
