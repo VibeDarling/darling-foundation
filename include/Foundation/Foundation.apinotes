@@ -38,6 +38,8 @@ Classes:
   SwiftName: NumberFormatter
 - Name: NSDateComponentsFormatter
   SwiftName: DateComponentsFormatter
+- Name: NSDateIntervalFormatter
+  SwiftName: DateIntervalFormatter
 - Name: NSISO8601DateFormatter
   SwiftName: ISO8601DateFormatter
 - Name: NSMeasurementFormatter
