@@ -34,7 +34,8 @@ typedef NSString *NSNotificationName NS_EXTENSIBLE_STRING_ENUM;
 - (void)removeObserver:(id)observer;
 - (void)removeObserver:(id)observer name:(NSString *)aName object:(id)anObject;
 #if NS_BLOCKS_AVAILABLE
-- (id)addObserverForName:(NSString *)name object:(id)obj queue:(NSOperationQueue *)queue usingBlock:(void (^)(NSNotification *note))block NS_AVAILABLE(10_6, 4_0);
+// The returned observer token is an NSObject; its notification is bridged to Swift's value type.
+- (NSObject * _Nonnull)addObserverForName:(NSNotificationName _Nullable)name object:(id _Nullable)obj queue:(NSOperationQueue * _Nullable)queue usingBlock:(void (^ _Nonnull)(NSNotification * _Nonnull note))block NS_AVAILABLE(10_6, 4_0);
 #endif
 
 @end

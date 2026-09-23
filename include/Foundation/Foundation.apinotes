@@ -12,6 +12,8 @@ Classes:
   SwiftBridge: Swift.Dictionary
 - Name: NSSet
   SwiftBridge: Swift.Set
+- Name: NSNotification
+  SwiftBridge: Foundation.Notification
 # NSData bridges to the Data value type, so `NSData *` in an Objective-C signature imports as
 # Data. Without it JSONSerialization.data(withJSONObject:) returns NSData and nothing downstream
 # that expects Data accepts it.
