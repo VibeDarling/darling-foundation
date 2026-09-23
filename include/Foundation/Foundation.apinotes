@@ -63,6 +63,12 @@ Classes:
   SwiftName: MeasurementFormatter
 - Name: NSJSONSerialization
   SwiftName: JSONSerialization
+- Name: NSProgress
+  SwiftName: Progress
+  Methods:
+  - Selector: 'discreteProgressWithTotalUnitCount:'
+    MethodKind: Class
+    SwiftName: 'discreteProgress(totalUnitCount:)'
 Typedefs:
 # Like the macOS SDK (NS_TYPED_EXTENSIBLE_ENUM): NSURLResourceKey imports as the struct URLResourceKey, which Swift
 # mangles as `So16NSURLResourceKeya`.
@@ -76,6 +82,12 @@ Typedefs:
   SwiftName: NSAttributedString.Key
 - Name: NSRunLoopMode
   SwiftName: RunLoop.Mode
+- Name: NSProgressKind
+  SwiftName: ProgressKind
+- Name: NSProgressUserInfoKey
+  SwiftName: ProgressUserInfoKey
+- Name: NSProgressFileOperationKind
+  SwiftName: Progress.FileOperationKind
 Tags:
 - Name: NSCalendarUnit
   SwiftName: NSCalendar.Unit

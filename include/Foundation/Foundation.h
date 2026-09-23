@@ -50,6 +50,7 @@
 #import <Foundation/NSPointerFunctions.h>
 #import <Foundation/NSPort.h>
 #import <Foundation/NSProcessInfo.h>
+#import <Foundation/NSProgress.h>
 #import <Foundation/NSPropertyList.h>
 #import <Foundation/NSProxy.h>
 #import <Foundation/NSRange.h>
