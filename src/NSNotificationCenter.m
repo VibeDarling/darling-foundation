@@ -194,7 +194,7 @@
     pthread_mutex_unlock(&_observersLock);
 }
 
-- (id)addObserverForName:(NSString *)name object:(id)obj queue:(NSOperationQueue *)queue usingBlock:(void (^)(NSNotification *note))block
+- (NSObject *)addObserverForName:(NSNotificationName)name object:(id)obj queue:(NSOperationQueue *)queue usingBlock:(void (^)(NSNotification *note))block
 {
     _NSNotificationObserver *notifObserver = [[_NSNotificationObserver alloc] initWithObserver:nil selector:NULL name:name object:obj queue:queue block:block];
     pthread_mutex_lock(&_observersLock);
