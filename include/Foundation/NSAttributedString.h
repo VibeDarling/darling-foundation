@@ -41,9 +41,9 @@ typedef NSUInteger NSAttributedStringFormattingOptions;
 - (NSDictionary<NSAttributedStringKey, id> * _Nonnull)attributesAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)range inRange:(NSRange)rangeLimit;
 - (id)attribute:(NSAttributedStringKey)attrName atIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)range inRange:(NSRange)rangeLimit;
 - (BOOL)isEqualToAttributedString:(NSAttributedString *)other;
-- (id)initWithString:(NSString *)str;
-- (id)initWithString:(NSString *)str attributes:(NSDictionary<NSAttributedStringKey, id> *)attrs;
-- (id)initWithAttributedString:(NSAttributedString *)attrStr;
+- (instancetype _Nonnull)initWithString:(NSString * _Nonnull)str;
+- (instancetype _Nonnull)initWithString:(NSString * _Nonnull)str attributes:(NSDictionary<NSAttributedStringKey, id> * _Nullable)attrs;
+- (instancetype _Nonnull)initWithAttributedString:(NSAttributedString * _Nonnull)attrStr;
 #if NS_BLOCKS_AVAILABLE
 - (void)enumerateAttributesInRange:(NSRange)enumerationRange options:(NSAttributedStringEnumerationOptions)opts usingBlock:(void (^)(NSDictionary<NSAttributedStringKey, id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop))block;
 - (void)enumerateAttribute:(NSAttributedStringKey)attrName inRange:(NSRange)enumerationRange options:(NSAttributedStringEnumerationOptions)opts usingBlock:(void (^)(id value, NSRange range, BOOL * _Nonnull stop))block;
