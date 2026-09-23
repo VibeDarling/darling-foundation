@@ -26,7 +26,7 @@ typedef NSString *NSNotificationName NS_EXTENSIBLE_STRING_ENUM;
     pthread_mutex_t _observersLock;
 }
 
-+ (id)defaultCenter;
+@property (class, readonly, retain) NSNotificationCenter * _Nonnull defaultCenter;
 - (void)addObserver:(id)observer selector:(SEL)aSelector name:(NSString *)aName object:(id)anObject;
 - (void)postNotification:(NSNotification *)notification;
 - (void)postNotificationName:(NSString *)aName object:(id)anObject;

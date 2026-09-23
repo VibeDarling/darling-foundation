@@ -2,7 +2,7 @@
 #import <Foundation/NSDate.h>
 #import <CoreFoundation/CFRunLoop.h>
 
-@class NSTimer, NSPort, NSArray;
+@class NSTimer, NSPort, NSArray<ObjectType>;
 
 // NS_TYPED_EXTENSIBLE_ENUM as in the macOS SDK. Without the wrapper this is a plain String
 // typealias in Swift, so the nested RunLoop.Mode has nowhere to carry .default and .common.
@@ -25,10 +25,10 @@ FOUNDATION_EXPORT const NSRunLoopMode NSRunLoopCommonModes;
 
 @interface NSRunLoop (NSRunLoop)
 
-@property (class, readonly, retain) NSRunLoop *currentRunLoop;
-+ (NSRunLoop *)mainRunLoop;
+@property (class, readonly, retain) NSRunLoop * _Nonnull currentRunLoop;
+@property (class, readonly, retain) NSRunLoop * _Nonnull mainRunLoop;
 
-- (NSRunLoopMode) currentMode;
+@property (readonly, copy) NSRunLoopMode _Nullable currentMode;
 - (CFRunLoopRef) getCFRunLoop;
 
 - (void) addTimer: (NSTimer *) timer forMode: (NSRunLoopMode) mode;
@@ -46,7 +46,7 @@ FOUNDATION_EXPORT const NSRunLoopMode NSRunLoopCommonModes;
 - (void) run;
 
 - (void) runUntilDate: (NSDate *) limitDate;
-- (BOOL) runMode: (NSRunLoopMode) mode beforeDate: (NSDate *) limitDate;
+- (BOOL) runMode: (NSRunLoopMode _Nonnull) mode beforeDate: (NSDate * _Nonnull) limitDate NS_SWIFT_NAME(run(mode:before:));
 
 @end
 
@@ -64,5 +64,7 @@ FOUNDATION_EXPORT const NSRunLoopMode NSRunLoopCommonModes;
 - (void)performSelector:(SEL)aSelector target:(id)target argument:(id)arg order:(NSUInteger)order modes:(NSArray *)modes;
 - (void)cancelPerformSelector:(SEL)aSelector target:(id)target argument:(id)arg;
 - (void)cancelPerformSelectorsWithTarget:(id)target;
+- (void)performInModes:(NSArray<NSRunLoopMode> * _Nonnull)modes block:(void (^ _Nonnull)(void))block;
+- (void)performBlock:(void (^ _Nonnull)(void))block;
 
 @end
