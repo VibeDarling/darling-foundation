@@ -134,6 +134,12 @@ Classes:
   SwiftName: ISO8601DateFormatter
 - Name: NSMeasurementFormatter
   SwiftName: MeasurementFormatter
+- Name: NSLengthFormatter
+  SwiftName: LengthFormatter
+- Name: NSMassFormatter
+  SwiftName: MassFormatter
+- Name: NSEnergyFormatter
+  SwiftName: EnergyFormatter
 - Name: NSJSONSerialization
   SwiftName: JSONSerialization
 Typedefs:
@@ -157,6 +163,14 @@ Tags:
   SwiftName: NSDecimalNumber.RoundingMode
 - Name: NSCalculationError
   SwiftName: NSDecimalNumber.CalculationError
+- Name: NSFormattingUnitStyle
+  SwiftName: Formatter.UnitStyle
+- Name: NSLengthFormatterUnit
+  SwiftName: LengthFormatter.Unit
+- Name: NSMassFormatterUnit
+  SwiftName: MassFormatter.Unit
+- Name: NSEnergyFormatterUnit
+  SwiftName: EnergyFormatter.Unit
 - Name: NSCalendarUnit
   SwiftName: NSCalendar.Unit
 - Name: NSNumberFormatterStyle
