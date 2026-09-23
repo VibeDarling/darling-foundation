@@ -91,7 +91,7 @@
 
 @implementation NSNotificationCenter
 
-+ (id)defaultCenter
++ (NSNotificationCenter *)defaultCenter
 {
     static NSNotificationCenter *defaultCenter = nil;
     static dispatch_once_t once = 0L;
