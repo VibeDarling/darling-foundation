@@ -142,6 +142,18 @@ Classes:
   SwiftName: EnergyFormatter
 - Name: NSJSONSerialization
   SwiftName: JSONSerialization
+- Name: NSPropertyListSerialization
+  SwiftName: PropertyListSerialization
+  Methods:
+  - Selector: "dataWithPropertyList:format:options:error:"
+    MethodKind: Class
+    SwiftName: "data(fromPropertyList:format:options:)"
+  - Selector: "propertyListWithData:options:format:error:"
+    MethodKind: Class
+    SwiftName: "propertyList(from:options:format:)"
+  - Selector: "propertyList:isValidForFormat:"
+    MethodKind: Class
+    SwiftName: "propertyList(_:isValidFor:)"
 Typedefs:
 # Like the macOS SDK (NS_TYPED_EXTENSIBLE_ENUM): NSURLResourceKey imports as the struct URLResourceKey, which Swift
 # mangles as `So16NSURLResourceKeya`.
@@ -158,6 +170,10 @@ Typedefs:
 # As on macOS: Swift spells NSDecimal as Decimal but still mangles it as `So9NSDecimala`.
 - Name: NSDecimal
   SwiftName: Decimal
+- Name: NSPropertyListReadOptions
+  SwiftName: PropertyListSerialization.ReadOptions
+- Name: NSPropertyListWriteOptions
+  SwiftName: PropertyListSerialization.WriteOptions
 Tags:
 - Name: NSRoundingMode
   SwiftName: NSDecimalNumber.RoundingMode
@@ -179,6 +195,10 @@ Tags:
   SwiftName: DateFormatter.Style
 - Name: NSDateFormatterBehavior
   SwiftName: DateFormatter.Behavior
+- Name: NSPropertyListFormat
+  SwiftName: PropertyListSerialization.PropertyListFormat
+- Name: NSPropertyListMutabilityOptions
+  SwiftName: PropertyListSerialization.MutabilityOptions
 Enumerators:
 # Nesting an enum does not re-derive its cases: the importer strips the common NSNumberFormatter
 # prefix but not the trailing Style, leaving .decimalStyle rather than macOS's .decimal.
@@ -227,6 +247,32 @@ Enumerators:
   SwiftName: default
 - Name: NSDateFormatterBehavior10_4
   SwiftName: behavior10_4
+- Name: NSPropertyListOpenStepFormat
+  SwiftName: openStep
+- Name: NSPropertyListXMLFormat_v1_0
+  SwiftName: xml
+- Name: NSPropertyListBinaryFormat_v1_0
+  SwiftName: binary
+# The importer keeps the trailing Search of each NSStringCompareOptions member (.caseInsensitiveSearch);
+# macOS spells them without it.
+- Name: NSCaseInsensitiveSearch
+  SwiftName: caseInsensitive
+- Name: NSLiteralSearch
+  SwiftName: literal
+- Name: NSBackwardsSearch
+  SwiftName: backwards
+- Name: NSAnchoredSearch
+  SwiftName: anchored
+- Name: NSNumericSearch
+  SwiftName: numeric
+- Name: NSDiacriticInsensitiveSearch
+  SwiftName: diacriticInsensitive
+- Name: NSWidthInsensitiveSearch
+  SwiftName: widthInsensitive
+- Name: NSForcedOrderingSearch
+  SwiftName: forcedOrdering
+- Name: NSRegularExpressionSearch
+  SwiftName: regularExpression
 Globals:
 - Name: NSDefaultRunLoopMode
   SwiftName: RunLoop.Mode.default
