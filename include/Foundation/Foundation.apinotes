@@ -211,6 +211,8 @@ Tags:
   SwiftName: PropertyListSerialization.PropertyListFormat
 - Name: NSPropertyListMutabilityOptions
   SwiftName: PropertyListSerialization.MutabilityOptions
+- Name: NSISO8601DateFormatOptions
+  SwiftName: ISO8601DateFormatter.Options
 Enumerators:
 # Nesting an enum does not re-derive its cases: the importer strips the common NSNumberFormatter
 # prefix but not the trailing Style, leaving .decimalStyle rather than macOS's .decimal.
