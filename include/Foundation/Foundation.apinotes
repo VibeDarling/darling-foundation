@@ -82,6 +82,8 @@ Classes:
   SwiftBridge: Foundation.URL
 - Name: NSCharacterSet
   SwiftBridge: Foundation.CharacterSet
+- Name: NSURLRequest
+  SwiftBridge: Foundation.URLRequest
 # SwiftName renames an Objective-C class to the name Swift code written against a recent macOS SDK
 # spells it. The class is unchanged; only the Swift-facing name is added. Without these the Swift
 # spelling does not resolve at all, and the diagnostic ("cannot find type 'RunLoop' in scope")
