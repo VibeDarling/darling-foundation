@@ -199,6 +199,8 @@ Tags:
   SwiftName: MassFormatter.Unit
 - Name: NSEnergyFormatterUnit
   SwiftName: EnergyFormatter.Unit
+- Name: NSMeasurementFormatterUnitOptions
+  SwiftName: MeasurementFormatter.UnitOptions
 - Name: NSCalendarUnit
   SwiftName: NSCalendar.Unit
 - Name: NSNumberFormatterStyle
