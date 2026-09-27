@@ -119,6 +119,8 @@ Classes:
   SwiftName: BlockOperation
 - Name: NSURLResponse
   SwiftName: URLResponse
+- Name: NSHTTPURLResponse
+  SwiftName: HTTPURLResponse
 - Name: NSURLSessionDataTask
   SwiftName: URLSessionDataTask
 - Name: NSFileManager
