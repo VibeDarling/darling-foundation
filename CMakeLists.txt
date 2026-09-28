@@ -351,3 +351,6 @@ target_link_libraries(defaults Foundation)
 install(TARGETS defaults DESTINATION libexec/darling/usr/bin)
 install(FILES tools/defaults.1 DESTINATION libexec/darling/usr/share/man/man1)
 
+add_darling_executable(plutil tools/plutil.m)
+target_link_libraries(plutil Foundation)
+install(TARGETS plutil DESTINATION libexec/darling/usr/bin)
