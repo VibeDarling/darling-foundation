@@ -9,6 +9,8 @@
 #import "NSKeyValueCollectionProxies.h"
 #import <Foundation/NSException.h>
 #import "NSKeyValueAccessor.h"
+#import <Foundation/NSArray.h>
+#import <Foundation/NSEnumerator.h>
 #import <Foundation/NSSet.h>
 #import <Foundation/NSString.h>
 #import <libkern/OSAtomic.h>
@@ -104,6 +106,24 @@ static NSString *const NSUnknownUserInfoKey = @"NSUnknownUserInfoKey";
         NSString *subkey = [keyPath substringWithRange:NSMakeRange(0, remainderRange.location)];
         id aVal = [self valueForKey:subkey];
         NSString *remainderPath = [keyPath substringFromIndex:remainderRange.location + 1];
+
+        // Cocoa applies the remainder of a key path to every element of a
+        // collection and collects the results. Without that, a path such as
+        // "itemArray.title" returns the first element's title - a string -
+        // where AppKit returns an array of titles, and a caller that expects a
+        // collection gets a scalar it then indexes as one.
+        //
+        // NSDictionary is left out: enumerating it yields keys rather than
+        // values, which is a different contract from the array and set cases.
+        if ([aVal isKindOfClass: [NSArray class]] ||
+            [aVal isKindOfClass: [NSSet class]])
+        {
+            NSMutableArray *results = [NSMutableArray arrayWithCapacity: [aVal count]];
+            for (id element in (id<NSFastEnumeration>)aVal)
+                [results addObject: [element valueForKeyPath: remainderPath]];
+            return results;
+        }
+
         return [aVal valueForKeyPath:remainderPath];
     }
     else
