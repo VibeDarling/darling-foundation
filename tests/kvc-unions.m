@@ -3,6 +3,22 @@
 #include <assert.h>
 #include <stdio.h>
 
+@interface UnionHolder : NSObject {
+    NSDictionary *_values;
+}
+- (id)initWithValues:(NSDictionary *)values;
+- (id)items;
+- (id)groups;
+- (id)sets;
+@end
+@implementation UnionHolder
+- (id)initWithValues:(NSDictionary *)values { self = [super init]; if (self) _values = [values retain]; return self; }
+- (id)items { return [_values objectForKey:@"items"]; }
+- (id)groups { return [_values objectForKey:@"groups"]; }
+- (id)sets { return [_values objectForKey:@"sets"]; }
+- (void)dealloc { [_values release]; [super dealloc]; }
+@end
+
 static void expectNilFailure(id collection, NSString *path)
 {
     BOOL raised = NO;
@@ -44,6 +60,16 @@ int main(void)
         expectNilFailure([NSSet setWithObject:[NSSet setWithObject:@{}]], @"@distinctUnionOfSets.missing");
         assert(([[@[@1, @2, @3] valueForKeyPath:@"@sum.self"] intValue] == 6));
         assert(([[objects valueForKeyPath:@"@count"] unsignedIntegerValue] == 3));
+        UnionHolder *holder = [[[UnionHolder alloc] initWithValues:@{@"items": records, @"groups": nested, @"sets": sets}] autorelease];
+        assert(([[holder valueForKeyPath:@"items.@unionOfObjects.info.name"] isEqual:@[@"a", @"b"]]));
+        assert(([[holder valueForKeyPath:@"items.info.name"] isEqual:@[@"a", @"b"]]));
+        assert(([[holder valueForKeyPath:@"items.@count"] unsignedIntegerValue] == 2));
+        assert(([[holder valueForKeyPath:@"groups.@unionOfArrays.self"] isEqual:@[@"a", @"b", @"a", @"c", @"a"]]));
+        assert(([[holder valueForKeyPath:@"sets.@distinctUnionOfSets.self"] isEqual:[NSSet setWithArray:@[@"a", @"b", @"c"]]]));
+        assert(([[[NSSet set] valueForKeyPath:@"@distinctUnionOfSets.self"] count] == 0));
+        expectNilFailure(@[@"not an array"], @"@unionOfArrays.self");
+        expectNilFailure(@[@"not an array"], @"@distinctUnionOfArrays.self");
+        expectNilFailure([NSSet setWithObject:@"not a set"], @"@distinctUnionOfSets.self");
     }
     puts("PASS: KVC unions, duplicates, nesting, key paths, nil rejection and aggregates");
     return 0;

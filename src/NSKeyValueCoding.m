@@ -107,6 +107,10 @@ static NSString *const NSUnknownUserInfoKey = @"NSUnknownUserInfoKey";
         id aVal = [self valueForKey:subkey];
         NSString *remainderPath = [keyPath substringFromIndex:remainderRange.location + 1];
 
+        // Operators consume the collection, not each of its members.
+        if ([remainderPath hasPrefix:@"@"])
+            return [aVal valueForKeyPath:remainderPath];
+
         // Cocoa applies the remainder of a key path to every element of a
         // collection and collects the results. Without that, a path such as
         // "itemArray.title" returns the first element's title - a string -
