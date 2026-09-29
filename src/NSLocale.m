@@ -97,6 +97,8 @@ CF_PRIVATE
 
 - (id)_prefs
 {
+    if (loc == nil || loc == (id)self)
+        return nil;
     return [loc _prefs];
 }
 
