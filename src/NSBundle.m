@@ -378,6 +378,17 @@ static void __NSBundleMainBundleDealloc()
     return [(NSURL *)CFBundleCopyResourceURL(_cfBundle, (CFStringRef)name, (CFStringRef)ext, (CFStringRef)subpath) autorelease];
 }
 
+// Private AppKit spelling used to fetch an image from a bundle's Resources.
+- (NSURL *)URLForImageResource:(NSString *)name
+{
+    NSURL *url = [self URLForResource: name withExtension: nil];
+    if (url == nil)
+        url = [self URLForResource: name withExtension: @"png"];
+    if (url == nil)
+        url = [self URLForResource: name withExtension: @"tiff"];
+    return url;
+}
+
 - (NSURL *)URLForResource:(NSString *)name withExtension:(NSString *)ext subdirectory:(NSString *)subpath localization:(NSString *)localizationName
 {
     return [(NSURL *)CFBundleCopyResourceURLForLocalization(_cfBundle, (CFStringRef)name, (CFStringRef)ext, (CFStringRef)subpath, (CFStringRef)localizationName) autorelease];
