@@ -1468,6 +1468,11 @@ CF_PRIVATE
 	return [[_writeHandle retain] autorelease];
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+	return [self retain];
+}
+
 @end
 
 @implementation NSPipe
