@@ -9,6 +9,7 @@
 #import "NSAttributedStringInternal.h"
 #import "NSStringInternal.h"
 #import <Foundation/NSPortCoder.h>
+#import <Foundation/NSRaise.h>
 #import <dispatch/dispatch.h>
 
 @implementation NSAttributedString
@@ -504,6 +505,19 @@ static __NSPlaceholderAttributedString *mutablePlaceholder = nil;
 
 - (id)init {
     return [self initWithString:@"" attributes:[NSDictionary dictionary]];
+}
+
+// Every [[NSAttributedString alloc] init...] lands here rather than on
+// NSAttributedString, so this is where the declared format initialiser has to exist.
+// Its specifiers are attribute names rather than types, which is a feature rather than
+// a port; logging it keeps the caller from mistaking that for a formatting bug.
+- (id)initWithFormat:(NSAttributedString *)format
+             options:(NSAttributedStringFormattingOptions)options
+              locale:(NSLocale *)locale
+           arguments:(va_list)arguments
+{
+    NSUnimplementedMethod();
+    return nil;
 }
 
 - (id)initWithString:(NSString *)str attributes:(NSDictionary *)attrs

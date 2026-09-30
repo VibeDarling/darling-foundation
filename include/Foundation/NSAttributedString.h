@@ -1,4 +1,5 @@
 #import <Foundation/NSString.h>
+#import <stdarg.h>
 #import <Foundation/NSDictionary.h>
 
 typedef NS_OPTIONS(NSUInteger, NSAttributedStringEnumerationOptions) {
@@ -44,6 +45,13 @@ typedef NSUInteger NSAttributedStringFormattingOptions;
 - (instancetype _Nonnull)initWithString:(NSString * _Nonnull)str;
 - (instancetype _Nonnull)initWithString:(NSString * _Nonnull)str attributes:(NSDictionary<NSAttributedStringKey, id> * _Nullable)attrs;
 - (instancetype _Nonnull)initWithAttributedString:(NSAttributedString * _Nonnull)attrStr;
+// Apple's attributed-string counterpart of -[NSString initWithFormat:...]: the format's
+// specifiers are attribute names rather than types. Declared here because OpenSwiftUI's
+// SPI shim wraps it, and an undeclared selector does not compile at all.
+- (instancetype _Nonnull)initWithFormat:(NSAttributedString * _Nonnull)format
+                                options:(NSAttributedStringFormattingOptions)options
+                                 locale:(NSLocale * _Nullable)locale
+                              arguments:(va_list)arguments;
 #if NS_BLOCKS_AVAILABLE
 - (void)enumerateAttributesInRange:(NSRange)enumerationRange options:(NSAttributedStringEnumerationOptions)opts usingBlock:(void (^)(NSDictionary<NSAttributedStringKey, id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop))block;
 - (void)enumerateAttribute:(NSAttributedStringKey)attrName inRange:(NSRange)enumerationRange options:(NSAttributedStringEnumerationOptions)opts usingBlock:(void (^)(id value, NSRange range, BOOL * _Nonnull stop))block;
