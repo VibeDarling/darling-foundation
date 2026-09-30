@@ -1807,7 +1807,7 @@ static const char* bytesInEncoding(NSString *string, BOOL externalRep, NSStringE
 {
     CFMutableStringRef str = CFStringCreateMutable(kCFAllocatorDefault, 0);
     CFStringReplaceAll(str, (CFStringRef)self);
-    CFStringNormalize(str, kCFStringNormalizationFormKD);
+    CFStringNormalize(str, kCFStringNormalizationFormC);
     return [(NSString *)str autorelease];
 }
 
@@ -1818,7 +1818,7 @@ static const char* bytesInEncoding(NSString *string, BOOL externalRep, NSStringE
 {
     CFMutableStringRef str = CFStringCreateMutable(kCFAllocatorDefault, 0);
     CFStringReplaceAll(str, (CFStringRef)self);
-    CFStringNormalize(str, kCFStringNormalizationFormC);
+    CFStringNormalize(str, kCFStringNormalizationFormKD);
     return [(NSString *)str autorelease];
 }
 
