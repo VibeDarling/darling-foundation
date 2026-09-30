@@ -367,6 +367,20 @@ SINGLETON_RR()
 
 @end
 
+// Like sudden termination, automatic termination has no counterpart here: nothing
+// in Darling terminates an idle app, so both calls only have to exist.
+@implementation NSProcessInfo (NSProcessInfoAutomaticTermination)
+
+- (void)disableAutomaticTermination: (NSString *) reason
+{
+}
+
+- (void)enableAutomaticTermination: (NSString *) reason
+{
+}
+
+@end
+
 @implementation NSProcessInfo (NSProcessInfoPlatform)
 -(BOOL)isMacCatalystApp {
     return NO;

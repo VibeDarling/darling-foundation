@@ -56,6 +56,11 @@ NSOperatingSystemVersion;
 - (void)disableSuddenTermination;
 @end
 
+@interface NSProcessInfo (NSProcessInfoAutomaticTermination)
+- (void)disableAutomaticTermination: (NSString *) reason;
+- (void)enableAutomaticTermination: (NSString *) reason;
+@end
+
 @interface NSProcessInfo (NSProcessInfoPlatform)
 -(BOOL)isMacCatalystApp;
 -(BOOL)isiOSAppOnMac;
