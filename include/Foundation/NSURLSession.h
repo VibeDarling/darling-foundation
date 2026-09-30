@@ -25,9 +25,9 @@ typedef NS_ENUM(NSInteger, NSURLSessionResponseDisposition) {
 };
 
 @class NSArray, NSCachedURLResponse, NSData, NSDictionary, NSError;
-@class NSHTTPCookie, NSHTTPURLResponse, NSInputStream, NSOperationQueue;
+@class NSHTTPCookie, NSHTTPURLResponse, NSInputStream, NSMutableData, NSOperationQueue;
 @class NSString, NSURL, NSURLAuthenticationChallenge, NSURLCache;
-@class NSURLCredential, NSURLCredentialStorage, NSURLProtectionSpace;
+@class NSURLConnection, NSURLCredential, NSURLCredentialStorage, NSURLProtectionSpace;
 @class NSURLResponse, NSURLSession, NSURLSessionConfiguration;
 @class NSURLSessionTask, NSURLSessionDataTask, NSURLSessionDownloadTask;
 @class NSURLSessionUploadTask;
@@ -111,7 +111,20 @@ FOUNDATION_EXPORT NSString * const NSURLSessionDownloadTaskResumeData;
 
 @end
 
-@interface NSURLSessionTask : NSObject <NSCopying>
+@interface NSURLSessionTask : NSObject <NSCopying> {
+    NSURLRequest *_originalRequest;
+    NSURLRequest *_currentRequest;
+    NSURLResponse *_response;
+    NSError *_error;
+    NSMutableData *_receivedData;
+    NSURLConnection *_connection;
+    NSString *_taskDescription;
+    void (^_completionHandler)(NSData *, NSURLResponse *, NSError *);
+    int64_t _countOfBytesReceived;
+    int64_t _countOfBytesExpectedToReceive;
+    NSUInteger _taskIdentifier;
+    NSURLSessionTaskState _state;
+}
 
 @property (readonly) NSUInteger taskIdentifier;
 @property (readonly, copy) NSURLRequest *originalRequest;
@@ -132,6 +145,7 @@ FOUNDATION_EXPORT NSString * const NSURLSessionDownloadTaskResumeData;
 @end
 
 @interface NSURLSessionDataTask : NSURLSessionTask
+- (id)initWithRequest: (NSURLRequest *) request completionHandler: (void (^)(NSData *, NSURLResponse *, NSError *)) completionHandler;
 @end
 
 @interface NSURLSessionUploadTask : NSURLSessionDataTask
