@@ -150,6 +150,8 @@ set(foundation_sources
 	src/NSPort.m
 	src/NSSocketPort.m
 	src/NSSocketPortNameServer.m
+	src/NSSocket.m
+	src/NSSelectInputSource.m
 	src/NSPortCoder.m
 	src/NSPortMessage.m
 	src/NSConcretePortCoder.m
