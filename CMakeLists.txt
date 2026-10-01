@@ -31,6 +31,7 @@ add_definitions(
 
 set(foundation_sources
 	src/_DebugUtils.m
+	src/ModernStubs.m
 	src/NSAppleScript.m
 	src/NSAddressCheckingResult.m
 	src/NSAffineTransform.m
