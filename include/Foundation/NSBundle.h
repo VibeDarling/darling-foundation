@@ -1,4 +1,5 @@
 #import <Foundation/NSObject.h>
+#import <Foundation/NSObjCRuntime.h>
 
 enum {
     NSBundleExecutableArchitectureI386   = 0x00000007,
@@ -14,6 +15,10 @@ typedef enum {
 typedef struct __CFBundle *CFBundleRef;
 @class NSArray, NSDictionary, NSString, NSURL, NSError;
 
+// Swift spells this Bundle, and on Apple's Foundation the importer takes that
+// name from the class itself. Stated explicitly here because this module is not
+// Apple's, so a Swift consumer sees NSBundle and then cannot find Bundle.
+NS_SWIFT_NAME(Bundle)
 @interface NSBundle : NSObject
 {
     NSBundleFlags _flags;
