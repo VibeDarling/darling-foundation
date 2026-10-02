@@ -1,4 +1,5 @@
 #import <Foundation/NSObject.h>
+#import <Foundation/NSObjCRuntime.h>
 #import <Foundation/NSRange.h>
 #import <Foundation/NSDate.h>
 #import <CoreFoundation/CFCalendar.h>
@@ -53,7 +54,7 @@ enum {
     NSUndefinedDateComponent = NSIntegerMax
 };
 
-typedef NSString *NSCalendarIdentifier;
+typedef NSString *NSCalendarIdentifier NS_TYPED_ENUM NS_SWIFT_NAME(String);
 
 FOUNDATION_EXPORT NSString * const NSCalendarDayChangedNotification;
 
