@@ -141,21 +141,6 @@
 
 @end
 
-@interface NSConstantIntegerNumber : NSNumber
-@end
-@implementation NSConstantIntegerNumber
-@end
-
-@interface NSConstantFloatNumber : NSNumber
-@end
-@implementation NSConstantFloatNumber
-@end
-
-@interface NSConstantDoubleNumber : NSNumber
-@end
-@implementation NSConstantDoubleNumber
-@end
-
 struct __NSArray0_struct {
     Class isa;
     NSUInteger count;
