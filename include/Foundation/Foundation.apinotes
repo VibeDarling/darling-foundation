@@ -84,6 +84,8 @@ Classes:
   SwiftBridge: Foundation.URL
 - Name: NSCharacterSet
   SwiftBridge: Foundation.CharacterSet
+# Pass the Swift URLRequest value type to NSURLRequest-taking APIs such as
+# URLSession.dataTask(with:completionHandler:) through its Objective-C bridge.
 - Name: NSURLRequest
   SwiftBridge: Foundation.URLRequest
 # SwiftName renames an Objective-C class to the name Swift code written against a recent macOS SDK
