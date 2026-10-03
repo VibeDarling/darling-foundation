@@ -54,7 +54,7 @@ enum {
     NSUndefinedDateComponent = NSIntegerMax
 };
 
-typedef NSString *NSCalendarIdentifier NS_TYPED_ENUM NS_SWIFT_NAME(String);
+typedef NSString *NSCalendarIdentifier;
 
 FOUNDATION_EXPORT NSString * const NSCalendarDayChangedNotification;
 
