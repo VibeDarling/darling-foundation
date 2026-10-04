@@ -217,6 +217,19 @@ static NSNumberFormatterBehavior defaultBehavior = NSNumberFormatterBehaviorDefa
     return [(NSString *)CFNumberFormatterCreateStringWithNumber(kCFAllocatorDefault, _formatter, (CFNumberRef)number) autorelease];
 }
 
+- (NSString *)stringForObjectValue:(id)obj
+{
+    // NSFormatter's implementation of this is the abstract raiser, and NSNumberFormatter never
+    // overrode it. So any cell or text field given a number formatter raised
+    // "stringForObjectValue: requires a subclass implementation" as soon as it tried to display its
+    // value, which aborted the whole nib it was being unarchived into. Calendar's
+    // SwipingPrefWindow.nib failed to decode for exactly that reason.
+    if (![obj isKindOfClass: [NSNumber class]]) {
+        return nil;
+    }
+    return [self stringFromNumber: obj];
+}
+
 - (NSNumber *)numberFromString:(NSString *)string
 {
     if (string == nil) {
