@@ -31,7 +31,6 @@ add_definitions(
 
 set(foundation_sources
 	src/_DebugUtils.m
-	src/ModernStubs.m
 	src/NSAppleScript.m
 	src/NSAddressCheckingResult.m
 	src/NSAffineTransform.m
@@ -329,12 +328,16 @@ set_property(
 	TARGET Foundation_x86_64 APPEND_STRING PROPERTY
 	LINK_FLAGS " -Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/reexport_x86_64.exp"
 )
+set_property(TARGET Foundation_x86_64 APPEND PROPERTY LINK_DEPENDS
+	${CMAKE_CURRENT_SOURCE_DIR}/reexport_x86_64.exp)
 endif (TARGET_x86_64)
 if (TARGET_ARM64)
 set_property(
 	TARGET Foundation_arm64 APPEND_STRING PROPERTY
 	LINK_FLAGS " -Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/reexport_arm64.exp"
 )
+set_property(TARGET Foundation_arm64 APPEND PROPERTY LINK_DEPENDS
+	${CMAKE_CURRENT_SOURCE_DIR}/reexport_arm64.exp)
 # Since macOS 14 the Swift Foundation overlay is part of Foundation.framework, so apps bind symbols such as
 # $sSS10FoundationE19_bridgeToObjectiveCSo8NSStringCyF to Foundation. Re-exporting the overlay from
 # src/external/swift (installed as /usr/lib/swift/libswiftFoundation.dylib) makes those binds resolve.
