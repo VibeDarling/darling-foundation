@@ -176,3 +176,7 @@ _OBJC_METACLASS_$_NSURLSessionUploadTask
 #__NSURLUbiquitousItemDownloadRequestedKey
 ___NSArray0__struct
 ___NSDictionary0__struct
+_OBJC_CLASS_$_NSConstantArray
+_OBJC_METACLASS_$_NSConstantArray
+_OBJC_CLASS_$_NSConstantDictionary
+_OBJC_METACLASS_$_NSConstantDictionary
