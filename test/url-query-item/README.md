@@ -34,3 +34,7 @@ cctools, pthread, dyld, Security, and CFNetwork. The Darwin linker must support
 Use a fresh sanitized DPREFIX, bootstrap `darling shell true`, then run the
 executable through `/Volumes/SystemRoot/<private-output>/query-item`.
 No messages, credentials, account registration or network service are involved.
+
+For the same original-name executable against an old and combined new runtime,
+see [CANONICAL.md](CANONICAL.md). This recipe also records the bounded proposal
+for registering the existing harness under ENABLE_TESTS without duplicating it.
