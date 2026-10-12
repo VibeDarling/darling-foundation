@@ -357,6 +357,13 @@ SINGLETON_RR()
 	return NO;
 }
 
+- (NSProcessInfoThermalState)thermalState
+{
+	/* No thermal-pressure source on Linux; report Nominal so clients
+	 * (e.g. Chromium's ThermalStateObserverMac) proceed normally. */
+	return NSProcessInfoThermalStateNominal;
+}
+
 @end
 
 // Darling has no sudden-termination mechanism, so there is no state to track.
@@ -414,3 +421,5 @@ void __NSInitializeProcess(int argc,const char *argv[]) {
     }
 }
 #endif
+
+NSString *const NSProcessInfoThermalStateDidChangeNotification = @"NSProcessInfoThermalStateDidChangeNotification";
