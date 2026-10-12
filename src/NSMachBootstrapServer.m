@@ -23,6 +23,9 @@
 #import <bootstrap_priv.h>
 #import <mach/mach.h>
 #import <dispatch/dispatch.h>
+#import <Foundation/NSDictionary.h>
+
+static NSMutableDictionary *g_localRegisteredPorts = nil;
 
 @implementation NSMachBootstrapServer
 
@@ -46,12 +49,21 @@
         break;
     }
 
-    mach_port_t port;
-    kern_return_t kr = bootstrap_look_up2(bootstrap_port, [name UTF8String], &port, 0, flags);
-    if (kr != KERN_SUCCESS) {
-        return nil;
+    if (bootstrap_port != MACH_PORT_NULL) {
+        mach_port_t port;
+        kern_return_t kr = bootstrap_look_up2(bootstrap_port, [name UTF8String], &port, 0, flags);
+        if (kr == KERN_SUCCESS) {
+            return [NSMachPort portWithMachPort: port options: NSMachPortDeallocateSendRight];
+        }
     }
-    return [NSMachPort portWithMachPort: port options: NSMachPortDeallocateSendRight];
+
+    @synchronized([NSMachBootstrapServer class]) {
+        NSPort *localPort = [g_localRegisteredPorts objectForKey: name];
+        if (localPort != nil) {
+            return localPort;
+        }
+    }
+    return nil;
 }
 
 - (NSPort *) portForName: (NSString *) name {
@@ -74,22 +86,35 @@
     if (![port isKindOfClass: [NSMachPort class]]) {
         return NO;
     }
-    kern_return_t kr = bootstrap_register(
-        bootstrap_port,
-        (char *) [name UTF8String],
-        [(NSMachPort *) port machPort]
-    );
-    return kr == KERN_SUCCESS;
+    kern_return_t kr = KERN_FAILURE;
+    if (bootstrap_port != MACH_PORT_NULL) {
+        kr = bootstrap_register(
+            bootstrap_port,
+            (char *) [name UTF8String],
+            [(NSMachPort *) port machPort]
+        );
+    }
+    if (kr == KERN_SUCCESS) {
+        return YES;
+    }
+
+    @synchronized([NSMachBootstrapServer class]) {
+        if (!g_localRegisteredPorts) {
+            g_localRegisteredPorts = [NSMutableDictionary new];
+        }
+        [g_localRegisteredPorts setObject: port forKey: name];
+        return YES;
+    }
 }
 
 - (BOOL) removePortForName: (NSString *) name {
-#if 0
-    kern_return_t kr = bootstrap_register(bootstrap_port, MACH_PORT_NULL);
-    return kr == KERN_SUCCESS;
-#else
-    // Apple's implementation appears to always return NO?
+    @synchronized([NSMachBootstrapServer class]) {
+        if ([g_localRegisteredPorts objectForKey: name] != nil) {
+            [g_localRegisteredPorts removeObjectForKey: name];
+            return YES;
+        }
+    }
     return NO;
-#endif
 }
 
 - (NSPort *) servicePortWithName: (NSString *) name {

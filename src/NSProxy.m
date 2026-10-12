@@ -343,49 +343,68 @@ OBJC_EXPORT void _objc_rootDealloc(id obj);
 
 - (BOOL)respondsToSelector:(SEL)sel
 {
-    BOOL retVal = NO;
-    NSInvocation *inv = nil;
-    id builder = _NSMessageBuilder(self, &inv);
-    [builder respondsToSelector: sel];
-    object_dispose(builder);
-    [self forwardInvocation: inv];
-    [inv getReturnValue: &retVal];
-    return retVal;
+    if (class_respondsToSelector([self class], sel)) {
+        return YES;
+    }
+    return [self methodSignatureForSelector: sel] != nil;
 }
 
 - (BOOL)conformsToProtocol:(Protocol *)protocol
 {
+    Class c = [self class];
+    while (c != Nil) {
+        if (class_conformsToProtocol(c, protocol)) {
+            return YES;
+        }
+        c = class_getSuperclass(c);
+    }
     BOOL retVal = NO;
     NSInvocation *inv = nil;
     id builder = _NSMessageBuilder(self, &inv);
     [builder conformsToProtocol: protocol];
     object_dispose(builder);
-    [self forwardInvocation: inv];
-    [inv getReturnValue: &retVal];
+    if (inv != nil) {
+        [self forwardInvocation: inv];
+        [inv getReturnValue: &retVal];
+    }
     return retVal;
 }
 
 - (BOOL)isMemberOfClass:(Class)cls
 {
+    if ([self class] == cls) {
+        return YES;
+    }
     BOOL retVal = NO;
     NSInvocation *inv = nil;
     id builder = _NSMessageBuilder(self, &inv);
     [builder isMemberOfClass: cls];
     object_dispose(builder);
-    [self forwardInvocation: inv];
-    [inv getReturnValue: &retVal];
+    if (inv != nil) {
+        [self forwardInvocation: inv];
+        [inv getReturnValue: &retVal];
+    }
     return retVal;
 }
 
 - (BOOL)isKindOfClass:(Class)aClass
 {
+    Class c = [self class];
+    while (c != Nil) {
+        if (c == aClass) {
+            return YES;
+        }
+        c = class_getSuperclass(c);
+    }
     BOOL retVal = NO;
     NSInvocation *inv = nil;
     id builder = _NSMessageBuilder(self, &inv);
     [builder isKindOfClass: aClass];
     object_dispose(builder);
-    [self forwardInvocation: inv];
-    [inv getReturnValue: &retVal];
+    if (inv != nil) {
+        [self forwardInvocation: inv];
+        [inv getReturnValue: &retVal];
+    }
     return retVal;
 }
 
