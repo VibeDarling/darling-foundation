@@ -352,6 +352,11 @@ SINGLETON_RR()
 	}
 }
 
+- (BOOL)isLowPowerModeEnabled
+{
+	return NO;
+}
+
 @end
 
 // Darling has no sudden-termination mechanism, so there is no state to track.

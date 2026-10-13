@@ -49,6 +49,7 @@ NSOperatingSystemVersion;
 - (NSTimeInterval)systemUptime;
 - (NSOperatingSystemVersion)operatingSystemVersion;
 - (BOOL)isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion)version;
+@property (readonly, getter=isLowPowerModeEnabled) BOOL lowPowerModeEnabled;
 
 @end
 
