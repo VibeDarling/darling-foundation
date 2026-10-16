@@ -39,8 +39,8 @@ typedef NS_OPTIONS(NSUInteger, NSAttributedStringFormattingOptions) {
 - (NSDictionary<NSAttributedStringKey, id> * _Nonnull)attributesAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)range inRange:(NSRange)rangeLimit;
 - (id)attribute:(NSAttributedStringKey)attrName atIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)range inRange:(NSRange)rangeLimit;
 - (BOOL)isEqualToAttributedString:(NSAttributedString *)other;
-- (id)initWithString:(NSString *)str;
-- (id)initWithString:(NSString *)str attributes:(NSDictionary<NSAttributedStringKey, id> *)attrs;
+- (nonnull instancetype)initWithString:(nonnull NSString *)str;
+- (nonnull instancetype)initWithString:(nonnull NSString *)str attributes:(nullable NSDictionary<NSAttributedStringKey, id> *)attrs;
 - (nonnull instancetype)initWithAttributedString:(nonnull NSAttributedString *)attrStr;
 #if NS_BLOCKS_AVAILABLE
 - (void)enumerateAttributesInRange:(NSRange)enumerationRange options:(NSAttributedStringEnumerationOptions)opts usingBlock:(void (^)(NSDictionary<NSAttributedStringKey, id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop))block;
