@@ -1,6 +1,7 @@
 #import <Foundation/NSObject.h>
 #import <Foundation/NSDate.h>
 #import <Foundation/NSDictionary.h>
+#import <Foundation/NSNotification.h>
 
 enum {
     NSWindowsNTOperatingSystem = 1,
@@ -77,4 +78,4 @@ typedef NS_ENUM(NSInteger, NSProcessInfoThermalState) {
 FOUNDATION_EXPORT void __NSInitializeProcess(int argc,const char *argv[]);
 #endif
 
-FOUNDATION_EXPORT NSString *const NSProcessInfoThermalStateDidChangeNotification;
+FOUNDATION_EXPORT NSNotificationName const NSProcessInfoThermalStateDidChangeNotification;
