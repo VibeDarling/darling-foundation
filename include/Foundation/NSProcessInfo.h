@@ -1,6 +1,7 @@
 #import <Foundation/NSObject.h>
 #import <Foundation/NSDate.h>
 #import <Foundation/NSDictionary.h>
+#import <Foundation/NSNotification.h>
 
 enum {
     NSWindowsNTOperatingSystem = 1,
@@ -20,6 +21,13 @@ typedef struct
 	NSInteger patchVersion;
 }
 NSOperatingSystemVersion;
+
+typedef NS_ENUM(NSInteger, NSProcessInfoThermalState) {
+    NSProcessInfoThermalStateNominal = 0,
+    NSProcessInfoThermalStateFair = 1,
+    NSProcessInfoThermalStateSerious = 2,
+    NSProcessInfoThermalStateCritical = 3,
+};
 
 @class NSArray, NSString, NSDictionary;
 
@@ -50,6 +58,7 @@ NSOperatingSystemVersion;
 - (NSOperatingSystemVersion)operatingSystemVersion;
 - (BOOL)isOperatingSystemAtLeastVersion:(NSOperatingSystemVersion)version;
 @property (readonly, getter=isLowPowerModeEnabled) BOOL lowPowerModeEnabled;
+@property (readonly) NSProcessInfoThermalState thermalState;
 
 @end
 
@@ -68,3 +77,5 @@ NSOperatingSystemVersion;
 #ifdef DARLING
 FOUNDATION_EXPORT void __NSInitializeProcess(int argc,const char *argv[]);
 #endif
+
+FOUNDATION_EXPORT NSNotificationName const NSProcessInfoThermalStateDidChangeNotification;

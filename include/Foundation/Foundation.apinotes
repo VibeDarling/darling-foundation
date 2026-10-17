@@ -211,6 +211,8 @@ Typedefs:
 Tags:
 - Name: NSRoundingMode
   SwiftName: NSDecimalNumber.RoundingMode
+- Name: NSProcessInfoThermalState
+  SwiftName: ProcessInfo.ThermalState
 - Name: NSCalculationError
   SwiftName: NSDecimalNumber.CalculationError
 - Name: NSFormattingUnitStyle
@@ -320,3 +322,5 @@ Globals:
   SwiftName: RunLoop.Mode.default
 - Name: NSRunLoopCommonModes
   SwiftName: RunLoop.Mode.common
+- Name: NSProcessInfoThermalStateDidChangeNotification
+  SwiftName: ProcessInfo.thermalStateDidChangeNotification
