@@ -849,6 +849,52 @@ static const char* uniqueString(const char* str);
     return [unarchiver decodeObject];
 }
 
+static BOOL typesAreCompatible(const char *t1, const char *t2)
+{
+    if (strcasecmp(t1, t2) == 0)
+        return YES;
+
+    char n1[256], n2[256];
+    int j = 0;
+    BOOL inName = NO;
+    for (int i = 0; t1[i] && j < sizeof(n1) - 1; i++) {
+        if (t1[i] == '{') {
+            n1[j++] = '{';
+            inName = YES;
+        } else if (inName) {
+            if (t1[i] == '=') {
+                n1[j++] = '=';
+                inName = NO;
+            }
+        } else {
+            n1[j++] = t1[i];
+        }
+    }
+    n1[j] = '\0';
+
+    j = 0;
+    inName = NO;
+    for (int i = 0; t2[i] && j < sizeof(n2) - 1; i++) {
+        if (t2[i] == '{') {
+            n2[j++] = '{';
+            inName = YES;
+        } else if (inName) {
+            if (t2[i] == '=') {
+                n2[j++] = '=';
+                inName = NO;
+            }
+        } else {
+            n2[j++] = t2[i];
+        }
+    }
+    n2[j] = '\0';
+
+    if (strcasecmp(n1, n2) == 0)
+        return YES;
+
+    return NO;
+}
+
 #pragma mark - NSCoder methods
 
 - (void)decodeValueOfObjCType:(const char*)type at:(void*)data
@@ -865,7 +911,7 @@ static const char* uniqueString(const char* str);
         return;
     
     const char* str = string.UTF8String;
-    if(strcasecmp(str, type) != 0)
+    if(!typesAreCompatible(str, type))
     {
         NSLog(@"wrong type in archive '%s', expected '%s'", str, type);
         [NSException raise:NSInvalidArgumentException format:@"NSUnarchiver decodeValueOfObjCType: wrong type in archive '%s', expected '%s'", str, type];
