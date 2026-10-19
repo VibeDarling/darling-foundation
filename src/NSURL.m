@@ -658,6 +658,15 @@ OBJC_PROTOCOL_IMPL_POP
     return [(NSURL *)CFURLCreateCopyAppendingPathComponent(CFGetAllocator(self), (CFURLRef)self, (CFStringRef) pathComponent, isDirectory) autorelease];
 }
 
+- (BOOL)startAccessingSecurityScopedResource
+{
+    return YES;
+}
+
+- (void)stopAccessingSecurityScopedResource
+{
+}
+
 @end
 
 @implementation NSURL (NSURLPathUtilities)

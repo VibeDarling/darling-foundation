@@ -111,20 +111,24 @@ NSString *_NSMethodExceptionProem(id object, SEL selector)
     {
         instance = NO;
     }
-    RELEASE_LOG("*** Assertion failure in %c[%s %s], %s:%ld", instance ? '-' : '+', className, sel_getName(selector), [fileName UTF8String], (long)line);
     va_list args;
     va_start(args, format);
-    [NSException raise:NSInternalInconsistencyException format:format arguments:args];
+    NSString *reason = [[[NSString alloc] initWithFormat:format arguments:args] autorelease];
     va_end(args);
+
+    NSLog(@"*** Assertion failure in %c[%s %s], %s:%ld: %@", instance ? '-' : '+', className, sel_getName(selector), [fileName UTF8String], (long)line, reason);
+    [NSException raise:NSInternalInconsistencyException format:@"%@", reason];
 }
 
 - (void)handleFailureInFunction:(NSString *)functionName file:(NSString *)fileName lineNumber:(NSInteger)line description:(NSString *)format,...
 {
-    RELEASE_LOG("*** Assertion failure in %s, %s:%ld", [functionName UTF8String], [fileName UTF8String], (long)line);
     va_list args;
     va_start(args, format);
-    [NSException raise:NSInternalInconsistencyException format:format arguments:args];
+    NSString *reason = [[[NSString alloc] initWithFormat:format arguments:args] autorelease];
     va_end(args);
+
+    NSLog(@"*** Assertion failure in %s, %s:%ld: %@", [functionName UTF8String], [fileName UTF8String], (long)line, reason);
+    [NSException raise:NSInternalInconsistencyException format:@"%@", reason];
 }
 
 @end
