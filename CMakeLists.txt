@@ -315,14 +315,10 @@ add_separated_framework(Foundation
 		CFNetwork_firstpass
 		xml2
 	LINK_FLAGS " -Wl,-reexport_library,${CMAKE_BINARY_DIR}/src/external/corefoundation/CoreFoundation \
-				-Wl,-reexport_library,${CMAKE_BINARY_DIR}/src/external/objc4/runtime/libobjc.A.dylib"
+				-Wl,-reexport_library,${CMAKE_BINARY_DIR}/src/external/objc4/runtime/libobjc.A.dylib \
+				-Wl,-reexport_library,${CMAKE_BINARY_DIR}/src/external/cfnetwork/src/CFNetwork"
 )
 
-# if (TARGET_i386)
-# set_property(
-# 	TARGET CoreFoundation_i386 APPEND_STRING PROPERTY
-# 	LINK_FLAGS " -Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/reexport_i386.exp")
-# endif (TARGET_i386)
 if (TARGET_x86_64)
 set_property(
 	TARGET Foundation_x86_64 APPEND_STRING PROPERTY
@@ -338,19 +334,28 @@ set_property(
 )
 set_property(TARGET Foundation_arm64 APPEND PROPERTY LINK_DEPENDS
 	${CMAKE_CURRENT_SOURCE_DIR}/reexport_arm64.exp)
+endif (TARGET_ARM64)
+
 # Since macOS 14 the Swift Foundation overlay is part of Foundation.framework, so apps bind symbols such as
 # $sSS10FoundationE19_bridgeToObjectiveCSo8NSStringCyF to Foundation. Re-exporting the overlay from
-# src/external/swift (installed as /usr/lib/swift/libswiftFoundation.dylib) makes those binds resolve.
-# arm64 only: the x86_64 slice of the overlay is Apple's, which loads @rpath/libswiftCore.dylib and
-# CoreGraphics, so re-exporting it would make every x86_64 Foundation client depend on them.
+# src/external/swift (installed as /usr/lib/swift/libswiftFoundation.dylib) makes those binds resolve on both
+# arm64 and x86_64. Runtime dependencies (@rpath/libswiftCore.dylib) are resolved automatically via dyld's
+# built-in fallback to /usr/lib/swift/.
 set(SWIFT_FOUNDATION_OVERLAY "${CMAKE_SOURCE_DIR}/src/external/swift/libswiftFoundation.dylib")
 if (EXISTS "${SWIFT_FOUNDATION_OVERLAY}")
+if (TARGET_ARM64)
 set_property(
 	TARGET Foundation_arm64 APPEND_STRING PROPERTY
 	LINK_FLAGS " -Wl,-reexport_library,${SWIFT_FOUNDATION_OVERLAY}"
 )
-endif ()
 endif (TARGET_ARM64)
+if (TARGET_x86_64)
+set_property(
+	TARGET Foundation_x86_64 APPEND_STRING PROPERTY
+	LINK_FLAGS " -Wl,-reexport_library,${SWIFT_FOUNDATION_OVERLAY}"
+)
+endif (TARGET_x86_64)
+endif ()
 
 add_darling_executable(defaults tools/defaults.m)
 target_link_libraries(defaults Foundation)
