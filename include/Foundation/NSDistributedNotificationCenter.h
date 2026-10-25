@@ -39,6 +39,7 @@ typedef NS_OPTIONS(NSUInteger, NSDistributedNotificationOptions) {
 @interface NSDistributedNotificationCenter : NSNotificationCenter
 {
 	BOOL _suspended;
+	id _distributedState;
 }
 
 @property BOOL suspended;
