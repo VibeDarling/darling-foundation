@@ -316,7 +316,7 @@ add_separated_framework(Foundation
 		xml2
 	LINK_FLAGS " -Wl,-reexport_library,${CMAKE_BINARY_DIR}/src/external/corefoundation/CoreFoundation \
 				-Wl,-reexport_library,${CMAKE_BINARY_DIR}/src/external/objc4/runtime/libobjc.A.dylib \
-				-Wl,-reexport_library,${CMAKE_BINARY_DIR}/src/external/cfnetwork/src/CFNetwork"
+				-Wl,-reexport_library,${CMAKE_BINARY_DIR}/src/external/cfnetwork/src/libCFNetwork_firstpass.dylib"
 )
 
 if (TARGET_x86_64)
