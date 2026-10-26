@@ -37,8 +37,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 }
 
 - initWithRootElement: (NSXMLElement *) element {
-    NSUnimplementedMethod();
-    return nil;
+    self = [self init];
+    if (self) {
+        if (element != nil) {
+            [self setRootElement: element];
+        }
+    }
+    return self;
 }
 
 - initWithXMLString: (NSString *) string
@@ -166,6 +171,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 }
 
 - (NSXMLElement *) rootElement {
+    if (_rootElement != nil)
+        return _rootElement;
     return [_children count] ? [_children objectAtIndex: 0] : nil;
 }
 
@@ -207,6 +214,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
     element = [element retain];
     [_rootElement release];
     _rootElement = (NSXMLElement *) element;
+    if ([_children count] > 0)
+        [_children replaceObjectAtIndex: 0 withObject: element];
+    else if (element != nil)
+        [_children addObject: element];
 }
 
 - (void) setDTD: (NSXMLDTD *) dtd {

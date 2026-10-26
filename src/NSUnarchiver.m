@@ -88,6 +88,7 @@ static const char* uniqueString(const char* str);
 {
     [_sharedStrings release];
     [_sharedObjects release];
+    if (_sharedClasses) CFRelease(_sharedClasses);
     [_versionByClassName release];
     [_classNameMap release];
     [_data release];
@@ -104,6 +105,8 @@ static const char* uniqueString(const char* str);
         _data = [data copy];
         _pos = 0;
         _sharedObjects = [[NSMutableDictionary alloc] init];
+        // _sharedClasses uses NULL value callbacks because Class objects are immortal runtime singletons
+        _sharedClasses = (NSMutableDictionary *)CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, NULL);
         _sharedStrings = [[NSMutableArray alloc] init];
         _versionByClassName = [[NSMutableDictionary alloc] init];
         if(![self readHeader])
@@ -212,8 +215,11 @@ static const char* uniqueString(const char* str);
                NSUDEBUG(@"NSUnarchiver _readObject: failed to read class!\n");
                 return NO;
             }
-            NSUDEBUG(@"Will now initWithCoder on class %@\n", NSStringFromClass(objectClass));
-
+            if (!objectClass)
+            {
+                *outObject = nil;
+                return YES;
+            }
             id object = [objectClass alloc];
             if(!object)
                 return NO;
@@ -223,34 +229,36 @@ static const char* uniqueString(const char* str);
             if (object2 != object)
                NSUDEBUG(@"NSUnarchiver: This may not work out, instance changed\n");
 
-            id objectAfterAwake = [object2 awakeAfterUsingCoder:self];
-            if(objectAfterAwake && objectAfterAwake != object2)
-                object2 = objectAfterAwake;
-            
-            _sharedObjects[label] = object2;
-
-            // We want to have _sharedObjects be the owner of this object. Whether we allocated it ourselves via [objectClass alloc],
-            // or if a different object was allocated in initWithCoder/awakeAfterUsingCoder, we need to release it, as inserting it
-            // into _sharedObjects doesn't transfer ownership, but increases the retain count further.
-            [object2 release];
+            if (object2 != nil)
+            {
+                id objectAfterAwake = [object2 awakeAfterUsingCoder:self];
+                if(objectAfterAwake && objectAfterAwake != object2)
+                {
+                    [object2 release];
+                    object2 = [objectAfterAwake retain];
+                }
+                
+                _sharedObjects[label] = object2;
+                [object2 release];
+            }
+            else
+            {
+                NSUDEBUG(@"NSUnarchiver _readObject: [%@ initWithCoder:] returned nil\n", NSStringFromClass(objectClass));
+                [_sharedObjects removeObjectForKey:label];
+            }
 
             NSUDEBUG(@"Saving %p into outObject at %p\n", object2, outObject);
             *outObject = object2;
             
             signed char endMarker;
-            if(![self decodeChar:&endMarker] || endMarker != EndOfObjectLabel)
+            if(![self decodeChar:&endMarker])
             {
-                NSLog(@"BUG: End of object label not found! This means [%@ initWithCoder:] (or super-class) isn't properly implemented.\n", NSStringFromClass(objectClass));
-                NSLog(@"Decoded byte had value 0x%02x (should be 0x86)\n", ((unsigned) endMarker) & 0xff);
-
-                uint8_t buf[8];
-                [_data getBytes:buf range:NSMakeRange(_pos, 8)];
-                NSLog(@"Following bytes: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
-
-                // Should be NSInconsistentArchiveException
-                [NSException raise:NSInvalidArgumentException format:@"Fix [%@ initWithCoder:]", NSStringFromClass(objectClass)];
-
-                __builtin_unreachable();
+                return NO;
+            }
+            if (endMarker != EndOfObjectLabel)
+            {
+                [NSException raise:NSInvalidArgumentException format:@"End of object label not found for [%@ initWithCoder:], got 0x%02x", NSStringFromClass(objectClass), ((unsigned) endMarker) & 0xff];
+                return NO;
             }
             
             return YES;
@@ -320,9 +328,9 @@ static const char* uniqueString(const char* str);
                 return NO;
             }
             
-            NSNumber* nextLabel = [self nextSharedObjectLabel];
+            NSNumber* nextLabel = @(_sharedClassCounter++);
             NSUDEBUG(@"NSUnarchiver readClass: next label %@ is for class %@\n", nextLabel, className);
-            _sharedObjects[nextLabel] = *outClass;
+            _sharedClasses[nextLabel] = *outClass;
             
             // We do not check the super-class
             Class superClass;
@@ -343,7 +351,7 @@ static const char* uniqueString(const char* str);
                 return NO;
             }
             label = BIAS(label);
-            *outClass = _sharedObjects[@(label)];
+            *outClass = _sharedClasses[@(label)];
             if (!*outClass)
                return NO;
             return YES;
@@ -744,6 +752,44 @@ static const char* uniqueString(const char* str);
             *((char**)data) = string ? strdup(string.UTF8String) : NULL;
             break;
         }
+
+        case '+':
+        {
+            int length;
+            if(![self decodeInt:&length])
+            {
+                rv = NO;
+                break;
+            }
+            if (length < 0)
+            {
+                rv = NO;
+                break;
+            }
+            NSData* dataBytes;
+            if(![self readData:&dataBytes length:(NSUInteger)length])
+            {
+                rv = NO;
+                break;
+            }
+            if (dataBytes.length > 0)
+            {
+                char *buf = malloc((size_t)length + 1);
+                if (buf == NULL)
+                {
+                    rv = NO;
+                    break;
+                }
+                memcpy(buf, dataBytes.bytes, length);
+                buf[length] = '\0';
+                *((char**)data) = buf;
+            }
+            else
+            {
+                *((char**)data) = NULL;
+            }
+            break;
+        }
         case '#':
             // a class value is a class record, as for an object's class
             rv = [self readClass:(Class*)data];
@@ -770,7 +816,7 @@ static const char* uniqueString(const char* str);
         case '[':
         {
             unsigned int size, align;
-            unsigned int i, count = 0;
+            unsigned int count = 0;
             const char* elemType;
 
             while ('0' <= *type && *type <= '9')
@@ -783,8 +829,16 @@ static const char* uniqueString(const char* str);
             type = sizeofType(elemType, &size, &align);
             NSUDEBUG(@"size and alignment of %s is %d, %d\n", elemType, size, align);
 
-            for (unsigned int i = 0; i < count; i++)
-               [self readType: elemType data:((char*) data)+(i*size)];
+            for (unsigned int idx = 0; idx < count; idx++)
+            {
+               if (![self readType: elemType data:((char*) data)+((size_t)idx * size)])
+               {
+                  rv = NO;
+                  break;
+               }
+            }
+            if (!rv)
+               break;
 
             ch = *type;
             type++;
@@ -843,7 +897,7 @@ static const char* uniqueString(const char* str);
     if(!data)
         return nil;
     
-    NSUnarchiver* unarchiver = [[NSUnarchiver alloc] initForReadingWithData:data];
+    NSUnarchiver* unarchiver = [[[NSUnarchiver alloc] initForReadingWithData:data] autorelease];
     if(archiveClassName)
         [unarchiver decodeClassName:archiveClassName asClassName:className];
     return [unarchiver decodeObject];
@@ -851,8 +905,28 @@ static const char* uniqueString(const char* str);
 
 static BOOL typesAreCompatible(const char *t1, const char *t2)
 {
-    if (strcasecmp(t1, t2) == 0)
+    if (strcmp(t1, t2) == 0)
         return YES;
+
+    if ((strcmp(t1, "+") == 0 && strcmp(t2, "*") == 0) ||
+        (strcmp(t1, "*") == 0 && strcmp(t2, "+") == 0))
+        return YES;
+
+    size_t len1 = strlen(t1);
+    size_t len2 = strlen(t2);
+    if (len1 == len2) {
+        BOOL match = YES;
+        for (size_t i = 0; i < len1; i++) {
+            char c1 = t1[i];
+            char c2 = t2[i];
+            if (c1 == c2) continue;
+            // NeXT/OpenStep typedstream compatibility: '@' (id) and '#' (Class)
+            if ((c1 == '@' && c2 == '#') || (c1 == '#' && c2 == '@')) continue;
+            match = NO;
+            break;
+        }
+        if (match) return YES;
+    }
 
     char n1[256], n2[256];
     int j = 0;
@@ -864,6 +938,9 @@ static BOOL typesAreCompatible(const char *t1, const char *t2)
         } else if (inName) {
             if (t1[i] == '=') {
                 n1[j++] = '=';
+                inName = NO;
+            } else if (t1[i] == '}') {
+                n1[j++] = '}';
                 inName = NO;
             }
         } else {
@@ -881,6 +958,9 @@ static BOOL typesAreCompatible(const char *t1, const char *t2)
         } else if (inName) {
             if (t2[i] == '=') {
                 n2[j++] = '=';
+                inName = NO;
+            } else if (t2[i] == '}') {
+                n2[j++] = '}';
                 inName = NO;
             }
         } else {
@@ -913,7 +993,6 @@ static BOOL typesAreCompatible(const char *t1, const char *t2)
     const char* str = string.UTF8String;
     if(!typesAreCompatible(str, type))
     {
-        NSLog(@"wrong type in archive '%s', expected '%s'", str, type);
         [NSException raise:NSInvalidArgumentException format:@"NSUnarchiver decodeValueOfObjCType: wrong type in archive '%s', expected '%s'", str, type];
         return;
     }
@@ -933,11 +1012,9 @@ static BOOL typesAreCompatible(const char *t1, const char *t2)
     if(![self decodeSharedString:&string])
         return;
 
-    NSUDEBUG(@"decodeValuesOfObjCTypes:%s at offset 0x%x\n", types, _pos);
-    
-    if(strcasecmp([string cStringUsingEncoding:NSASCIIStringEncoding], types) != 0)
+    const char *str = [string cStringUsingEncoding:NSASCIIStringEncoding];
+    if(!typesAreCompatible(str, types))
     {
-        NSLog(@"wrong types in archive '%@', expected '%s'", string, types);
         [NSException raise:NSInvalidArgumentException format:@"NSUnarchiver decodeValuesOfObjCTypes: wrong types in archive '%@', expected '%s'", string, types];
         return;
     }
@@ -945,13 +1022,16 @@ static BOOL typesAreCompatible(const char *t1, const char *t2)
     va_list argList;
     va_start (argList, types);
     
-    const char* type = types;
-    while(*type != '\0')
+    const char* archType = str;
+    const char* expType = types;
+    while(*archType != '\0' && *expType != '\0')
     {
         void* data = va_arg(argList, void*);
-        BOOL isObject = type[0] == '@';
-        NSUDEBUG(@"next type is %c, data is %p\n", *type, data);
-        BOOL didRead = [self readType:type data:data outType:&type];
+        BOOL isObject = archType[0] == '@';
+        NSUDEBUG(@"next type is %c, data is %p\n", *archType, data);
+        BOOL didRead = [self readType:archType data:data outType:&archType];
+        unsigned s, a;
+        expType = sizeofType(expType, &s, &a);
 
         if (didRead && isObject)
         {
@@ -1019,14 +1099,14 @@ static BOOL typesAreCompatible(const char *t1, const char *t2)
         return NULL;
     
     int length;
-    if(![self decodeInt:&length])
+    if(![self decodeInt:&length] || length < 0)
         return NULL;
     
     NSData* data;
-    if(![self readData:&data length:length])
+    if(![self readData:&data length:(NSUInteger)length])
         return NULL;
     
-    *outLength = length;
+    *outLength = (NSUInteger)length;
     return (void*)data.bytes;
 }
 
@@ -1079,7 +1159,69 @@ static BOOL typesAreCompatible(const char *t1, const char *t2)
 }
 
 -(void)replaceObject:original withObject:replacement {
-   NSUnimplementedMethod();
+   if (original == replacement || !original || !replacement)
+      return;
+   for (id key in [_sharedObjects allKeys]) {
+      if (_sharedObjects[key] == original) {
+         _sharedObjects[key] = replacement;
+      }
+   }
+}
+
+- (BOOL)allowsKeyedCoding
+{
+    return NO;
+}
+
+- (BOOL)containsValueForKey:(NSString *)key
+{
+    return NO;
+}
+
+- (id)decodeObjectForKey:(NSString *)key
+{
+    return nil;
+}
+
+- (BOOL)decodeBoolForKey:(NSString *)key
+{
+    return NO;
+}
+
+- (int)decodeIntForKey:(NSString *)key
+{
+    return 0;
+}
+
+- (int32_t)decodeInt32ForKey:(NSString *)key
+{
+    return 0;
+}
+
+- (int64_t)decodeInt64ForKey:(NSString *)key
+{
+    return 0;
+}
+
+- (float)decodeFloatForKey:(NSString *)key
+{
+    return 0.0f;
+}
+
+- (double)decodeDoubleForKey:(NSString *)key
+{
+    return 0.0;
+}
+
+- (NSInteger)decodeIntegerForKey:(NSString *)key
+{
+    return 0;
+}
+
+- (const uint8_t *)decodeBytesForKey:(NSString *)key returnedLength:(NSUInteger *)len
+{
+    if (len) *len = 0;
+    return NULL;
 }
 
 @end

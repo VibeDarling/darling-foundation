@@ -57,6 +57,8 @@ static const CFSetCallBacks identitySetCallBacks = {0, retainObject, releaseObje
         CFRelease(replacementTable);
     if (_objectLabels)
         CFRelease(_objectLabels);
+    if (_classLabels)
+        CFRelease(_classLabels);
     if (_unconditionalObjects)
         CFRelease(_unconditionalObjects);
     [_sharedStrings release];
@@ -140,6 +142,8 @@ static NSMutableDictionary *encodedClassNames = nil;
         mdata = [data retain];
         replacementTable = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &identityKeyCallBacks, &objectValueCallBacks);
         _objectLabels = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &identityKeyCallBacks, NULL);
+        _classLabels = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &identityKeyCallBacks, NULL);
+        _nextClassLabel = 0;
         _unconditionalObjects = CFSetCreateMutable(kCFAllocatorDefault, 0, &identitySetCallBacks);
         _sharedStrings = [[NSMutableDictionary alloc] init];
 
@@ -228,14 +232,19 @@ static NSMutableDictionary *encodedClassNames = nil;
         [self _writeByte:NullLabel];
         return;
     }
-    if ([self _writeReferenceIfLabeled:cls])
+    const void *label;
+    if (CFDictionaryGetValueIfPresent(_classLabels, (const void *)cls, &label))
+    {
+        [self _writeLabelReference:((NSUInteger)label - 1)];
         return;
+    }
 
     NSString *name = [self classNameEncodedForTrueClassName:NSStringFromClass(cls)];
     [self _writeByte:NewLabel];
     [self _writeSharedString:name.UTF8String];
     [self _writeInt:(int)[cls version]];
-    [self _takeObjectLabel:cls];
+    NSUInteger classLabel = _nextClassLabel++;
+    CFDictionarySetValue(_classLabels, (const void *)cls, (const void *)(classLabel + 1));
     [self _writeClass:class_getSuperclass(cls)];
 }
 

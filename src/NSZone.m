@@ -82,6 +82,16 @@ void NSZoneFree(NSZone *zone, void *ptr)
     malloc_zone_free((malloc_zone_t *)zone, ptr);
 }
 
+void *NSAllocateCollectable(NSUInteger size, NSUInteger options)
+{
+    return malloc(size);
+}
+
+void *NSReallocateCollectable(void *ptr, NSUInteger size, NSUInteger options)
+{
+    return realloc(ptr, size);
+}
+
 NSUInteger NSPageSize(void)
 {
     return PAGE_SIZE;

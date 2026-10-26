@@ -211,6 +211,8 @@ FOUNDATION_EXPORT const NSExceptionName NSPortReceiveException;
 FOUNDATION_EXPORT const NSExceptionName NSOldStyleException;
 FOUNDATION_EXPORT const NSExceptionName NSAssertionHandlerKey;
 
+FOUNDATION_EXPORT void NSRequestConcreteImplementation(id self, SEL _cmd, Class abstractClass);
+
 __attribute__((__objc_exception__))
 @interface NSException : NSObject <NSCopying, NSCoding> {
     NSExceptionName _name;

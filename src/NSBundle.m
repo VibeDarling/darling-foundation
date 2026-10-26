@@ -255,11 +255,21 @@ static NSString* frameworkPathForPath(NSString *filePath) {
 
 + (NSBundle *)bundleWithIdentifier:(NSString *)identifier
 {
+    if (identifier == nil)
+        return nil;
+
     NSBundle *bundle = nil;
     @synchronized(bundlesByIdentifier)
     {
         bundle = [bundlesByIdentifier[identifier] retain];
-        // TODO: we should be doing some searching if the bundle is nil
+    }
+    if (bundle == nil)
+    {
+        [self allFrameworks];
+        @synchronized(bundlesByIdentifier)
+        {
+            bundle = [bundlesByIdentifier[identifier] retain];
+        }
     }
     return [bundle autorelease];
 }

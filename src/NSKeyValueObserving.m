@@ -608,7 +608,7 @@ static void NSKeyValueRaiseUnregistered(NSObject *receiver, NSObject *observer, 
     NSKeyValueObservationInfo *observationInfo = __NSKeyValueRetainedObservationInfoForObject(self, containerClass);
     if (observationInfo == nil)
     {
-        NSKeyValueRaiseUnregistered(self, observer, property.keyPath, @"any");
+        return;
     }
     if (observance == nil)
     {
@@ -623,6 +623,11 @@ static void NSKeyValueRaiseUnregistered(NSObject *receiver, NSObject *observer, 
             }
         }
     }
+    if (observance == nil)
+    {
+        [observationInfo release];
+        return;
+    }
     [observationInfo removeObservance:observance];
     [property object:self didRemoveObservance:observance recurse:YES];
     // release to match original allocation of NSKeyValueObservance object
@@ -632,15 +637,18 @@ static void NSKeyValueRaiseUnregistered(NSObject *receiver, NSObject *observer, 
         if (object_getClass(self) != containerClass.originalClass)
         {
             [self setObservationInfo:nil];
-            [observationInfo release];
             object_setClass(self, containerClass.originalClass);
         }
     }
-
+    [observationInfo release];
 }
 
 - (void)removeObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath context:(void *)context
 {
+    dispatch_once(&__NSKeyValueObserverRegistrationLockCreationToken, 
+    ^{
+        __NSKeyValueObserverRegisterationLock = [[NSRecursiveLock alloc] init];
+    });
     [__NSKeyValueObserverRegisterationLock lock];
     NSKeyValueProperty *property = _NSKeyValuePropertyForIsaAndKeyPath(object_getClass(self), keyPath);
     NSKeyValueObservationInfo *observationInfo = [self observationInfo];
@@ -654,16 +662,19 @@ static void NSKeyValueRaiseUnregistered(NSObject *receiver, NSObject *observer, 
             break;
         }
     }
-    if (observance == nil)
+    if (observance != nil)
     {
-        NSKeyValueRaiseUnregistered(self, observer, keyPath, context);
+        [self _removeObserver:observer forProperty:property optionalObservance:observance];
     }
-    [self _removeObserver:observer forProperty:property optionalObservance:observance];
     [__NSKeyValueObserverRegisterationLock unlock];
 }
 
 - (void)removeObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath
 {
+    dispatch_once(&__NSKeyValueObserverRegistrationLockCreationToken, 
+    ^{
+        __NSKeyValueObserverRegisterationLock = [[NSRecursiveLock alloc] init];
+    });
     [__NSKeyValueObserverRegisterationLock lock];
     NSKeyValueProperty *property = _NSKeyValuePropertyForIsaAndKeyPath(object_getClass(self), keyPath);
     [self _removeObserver:observer forProperty:property optionalObservance:nil];
@@ -763,6 +774,8 @@ static void NSKVODeallocate(id self, SEL _cmd)
 
 - (void)addObserver:(NSObject *)observer toObjectsAtIndexes:(NSIndexSet *)indexes forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(void *)context
 {
+    if (indexes == nil || [indexes count] == 0)
+        return;
     dispatch_once(&__NSKeyValueObserverRegistrationLockCreationToken, 
     ^{
         __NSKeyValueObserverRegisterationLock = [[NSRecursiveLock alloc] init];
@@ -772,11 +785,19 @@ static void NSKVODeallocate(id self, SEL _cmd)
     {
         return; //early bail. no need to lock if we're just going to unlock immediately
     }
+    NSUInteger count = [self count];
     [__NSKeyValueObserverRegisterationLock lock];
     while (index != NSNotFound)
     {
-        NSKeyValueProperty *property = _NSKeyValuePropertyForIsaAndKeyPath(object_getClass(self[index]), keyPath);
-        [self[index] addObserver:observer forProperty:property options:options context:context];
+        if (index < count)
+        {
+            id obj = self[index];
+            if (obj != nil)
+            {
+                NSKeyValueProperty *property = _NSKeyValuePropertyForIsaAndKeyPath(object_getClass(obj), keyPath);
+                [obj addObserver:observer forProperty:property options:options context:context];
+            }
+        }
         index = [indexes indexGreaterThanIndex:index];
     }
     [__NSKeyValueObserverRegisterationLock unlock];
@@ -784,16 +805,30 @@ static void NSKVODeallocate(id self, SEL _cmd)
 
 - (void)removeObserver:(NSObject *)observer fromObjectsAtIndexes:(NSIndexSet *)indexes forKeyPath:(NSString *)keyPath
 {
+    if (indexes == nil || [indexes count] == 0)
+        return;
+    dispatch_once(&__NSKeyValueObserverRegistrationLockCreationToken, 
+    ^{
+        __NSKeyValueObserverRegisterationLock = [[NSRecursiveLock alloc] init];
+    });
     NSUInteger index = [indexes firstIndex];
     if (index == NSNotFound)
     {
         return;
     }
+    NSUInteger count = [self count];
     [__NSKeyValueObserverRegisterationLock lock];
     while (index != NSNotFound)
     {
-        NSKeyValueProperty *property = _NSKeyValuePropertyForIsaAndKeyPath(object_getClass(self[index]), keyPath);
-        [self[index] _removeObserver:observer forProperty:property optionalObservance:nil]; 
+        if (index < count)
+        {
+            id obj = self[index];
+            if (obj != nil)
+            {
+                NSKeyValueProperty *property = _NSKeyValuePropertyForIsaAndKeyPath(object_getClass(obj), keyPath);
+                [obj _removeObserver:observer forProperty:property optionalObservance:nil];
+            }
+        }
         index = [indexes indexGreaterThanIndex:index];  // for some reason, this deregisters in the same order as it registers, instead of reverse order. 
     }
     [__NSKeyValueObserverRegisterationLock unlock];
@@ -801,15 +836,29 @@ static void NSKVODeallocate(id self, SEL _cmd)
 
 - (void)removeObserver:(NSObject *)observer fromObjectsAtIndexes:(NSIndexSet *)indexes forKeyPath:(NSString *)keyPath context:(void *)context
 {
+    if (indexes == nil || [indexes count] == 0)
+        return;
+    dispatch_once(&__NSKeyValueObserverRegistrationLockCreationToken, 
+    ^{
+        __NSKeyValueObserverRegisterationLock = [[NSRecursiveLock alloc] init];
+    });
     NSUInteger index = [indexes firstIndex];
     if (index == NSNotFound)
     {
         return;
     }
+    NSUInteger count = [self count];
     [__NSKeyValueObserverRegisterationLock lock];
     while (index != NSNotFound)
     {
-        [self[index] removeObserver:observer forKeyPath:keyPath context:context];
+        if (index < count)
+        {
+            id obj = self[index];
+            if (obj != nil)
+            {
+                [obj removeObserver:observer forKeyPath:keyPath context:context];
+            }
+        }
         index = [indexes indexGreaterThanIndex:index];
     }
     [__NSKeyValueObserverRegisterationLock unlock];
@@ -1034,17 +1083,20 @@ void _NSKVONotifyingEnableForInfoAndKey(NSKVONotifyingInfo *notifyingInfo, NSStr
     {
         Method m = [(NSKeyValueMethodSetter *)setter method];
         const char *typeEncoding = method_getTypeEncoding(m);
-        if (typeEncoding[0] != 'v')
+        if (typeEncoding == NULL || typeEncoding[0] != 'v')
         {
-            NSLog(@"KVO only supports -set<Key>: methods that return void. Autonotifying will not be done for invocations of -[%@ %s].", notifyingInfo->_originalClass, sel_getName(method_getName(m)));
+            if (typeEncoding != NULL) {
+                NSLog(@"KVO only supports -set<Key>: methods that return void. Autonotifying will not be done for invocations of -[%@ %s].", notifyingInfo->_originalClass, sel_getName(method_getName(m)));
+            }
         }
         else
         {
             char *argtype = method_copyArgumentType(m, 2);
             IMP replacementSetter = (IMP)&__NSSetObjectValueAndNotify;
-            if (argtype[0] <= '?' && argtype[0] != '#')
+            if (argtype == NULL || (argtype[0] <= '?' && argtype[0] != '#'))
             {
                 NSLog(@"KVO only supports -set<Key>: methods that take id, NSNumber-supported scalar types, and some structure types. Autonotifying will not be done for invocations of -[%@ %s].", notifyingInfo->_originalClass, sel_getName(method_getName(m)));
+                if (argtype) free(argtype);
                 //TODO: I'm not sure this is actually true anymore, but this is clearly a code path that exists.
             }
             else
@@ -1128,11 +1180,9 @@ void _NSKVONotifyingEnableForInfoAndKey(NSKVONotifyingInfo *notifyingInfo, NSStr
                     NSKVONotifyingSetMethodImplementation(notifyingInfo, @selector(forwardInvocation:), (IMP)&NSKVOForwardInvocation, nil);
                     Class otherClass= notifyingInfo->_notifyingClass;
                     const char *methodName = sel_getName(selector);
-                    int nameLength = strlen(methodName);
                     const char *prefix = kOriginalImplementationMethodNamePrefix;
-                    char buffer[29] = {0};
-                    strlcpy(buffer, prefix, nameLength+strlen(prefix));
-                    strlcat(buffer, methodName, nameLength+strlen(prefix));
+                    char buffer[512] = {0};
+                    snprintf(buffer, sizeof(buffer), "%s%s", prefix, methodName);
                     SEL newForwardingSelector = sel_registerName(buffer);
                     IMP originalIMP = method_getImplementation(m);
                     const char *originalTypeEncoding = method_getTypeEncoding(m);
@@ -1189,10 +1239,8 @@ static void NSKVOForwardInvocation(id self, SEL _cmd, NSInvocation *invocation)
     {
         [self willChangeValueForKey:key];
         const char *methodName = sel_getName(selector);
-        int nameLength = strlen(methodName);
-        char buffer[29] = {0};
-        strlcpy(buffer, kOriginalImplementationMethodNamePrefix, nameLength+strlen(kOriginalImplementationMethodNamePrefix));
-        strlcat(buffer, methodName, nameLength+strlen(kOriginalImplementationMethodNamePrefix));
+        char buffer[512] = {0};
+        snprintf(buffer, sizeof(buffer), "%s%s", kOriginalImplementationMethodNamePrefix, methodName);
         SEL newForwardingSelector = sel_registerName(buffer);
         [invocation setSelector:newForwardingSelector];
         [invocation invoke];

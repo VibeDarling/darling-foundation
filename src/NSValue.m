@@ -81,9 +81,14 @@ static NSValue *_NSNewValue(void *value, const char *type);
     char *type = NULL;
     NSUInteger size = 0;
     [aDecoder decodeValueOfObjCType:@encode(char *) at:&type];
+    if (type == NULL)
+    {
+        return nil;
+    }
     NSGetSizeAndAlignment(type, &size, NULL);
     if (size == 0)
     {
+        free(type);
         return nil;
     }
 
@@ -92,6 +97,7 @@ static NSValue *_NSNewValue(void *value, const char *type);
         val = malloc(size);
         if (val == NULL)
         {
+            free(type);
             return nil;
         }
     }
@@ -104,6 +110,7 @@ static NSValue *_NSNewValue(void *value, const char *type);
     {
         free(val);
     }
+    free(type);
 
     return value;
 }
@@ -408,18 +415,23 @@ static id newDecodedValue(NSCoder *aCoder)
     }
     else
     {
-        char *type;
+        char *type = NULL;
         uint8_t stack_val[MAX_STACK];
         uint8_t *val = &stack_val[0];
         [aCoder decodeValueOfObjCType:@encode(char *) at:&type];
+        if (type == NULL)
+        {
+            return nil;
+        }
 
-        NSUInteger size;
+        NSUInteger size = 0;
         NSGetSizeAndAlignment(type, &size, NULL);
         if (size > MAX_STACK)
         {
             val = (uint8_t *)malloc(size);
             if (val == NULL)
             {
+                free(type);
                 return nil;
             }
         }
@@ -429,6 +441,7 @@ static id newDecodedValue(NSCoder *aCoder)
         {
             free(val);
         }
+        free(type);
         return value;
     }
 }
@@ -549,20 +562,31 @@ static id newDecodedValue(NSCoder *aCoder)
 
 - (BOOL)isEqualToValue:(NSValue *)value
 {
-    BOOL equal = YES;
-    if (self != value)
+    if (self == value)
+        return YES;
+    if (!value)
+        return NO;
+    const char *type1 = [self objCType];
+    const char *type2 = [value objCType];
+    if (strcmp(type1, type2) != 0)
+        return NO;
+    NSUInteger sz = 0;
+    NSGetSizeAndAlignment(type1, &sz, NULL);
+    if (sz == 0)
+        return YES;
+    void *v1 = malloc(sz);
+    void *v2 = malloc(sz);
+    if (!v1 || !v2)
     {
-        const char *type = [self objCType];
-        NSUInteger sz = 0;
-        NSGetSizeAndAlignment(type, &sz, NULL);
-        void *v1 = malloc(sz);
-        void *v2 = malloc(sz);
-        [self getValue:v1];
-        [self getValue:v2];
-        equal = memcmp(v1, v2, sz) == 0;
         free(v1);
         free(v2);
+        return NO;
     }
+    [self getValue:v1];
+    [value getValue:v2];
+    BOOL equal = (memcmp(v1, v2, sz) == 0);
+    free(v1);
+    free(v2);
     return equal;
 }
 
@@ -632,19 +656,15 @@ static id newDecodedValue(NSCoder *aCoder)
 
 - (void)encodeWithCoder:(NSCoder *)aCoder
 {
-    if (_specialFlags == 0)
+    if (_specialFlags == 0 || ![aCoder allowsKeyedCoding])
     {
         [super encodeWithCoder:aCoder];
         return;
     }
-    if ([aCoder allowsKeyedCoding])
-    {
-        [aCoder encodeInteger:_specialFlags forKey:NS_special];  // _specialFlags is 2 for CGSize
-        switch (_specialFlags)
+
+    [aCoder encodeInteger:_specialFlags forKey:NS_special];  // _specialFlags is 2 for CGSize
+    switch (_specialFlags)
         {
-            case NSNotSpecialType:
-                [super encodeWithCoder:aCoder];
-                break;
             case NSPointType:
                 [aCoder encodePoint:[self pointValue] forKey:NS_pointval];
                 break;
@@ -718,7 +738,6 @@ static id newDecodedValue(NSCoder *aCoder)
             }
 #endif
         }
-    }
 }
 
 static uint8_t charHalfToAscii(uint8_t in)

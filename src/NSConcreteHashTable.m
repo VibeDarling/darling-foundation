@@ -843,9 +843,7 @@ const NSHashTableCallBacks NSOwnedObjectIdentityHashCallBacks =
 
   if (anObject == nil)
     {
-      [NSException raise: NSInvalidArgumentException
-		  format: @"[%@-%@:] given nil argument",
-        NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+      return;
     }
 
   n = GSIMapNodeForKey(t, (GSIMapKey)anObject);

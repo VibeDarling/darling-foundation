@@ -13,6 +13,8 @@
     CFMutableDictionaryRef replacementTable;
     NSMutableDictionary<NSString*,NSString*>* map;
     CFMutableDictionaryRef _objectLabels;
+    CFMutableDictionaryRef _classLabels;
+    NSUInteger _nextClassLabel;
     NSMutableDictionary<NSData*,NSNumber*>* _sharedStrings;
     NSUInteger _nextObjectLabel;
     CFMutableSetRef _unconditionalObjects;
@@ -50,6 +52,8 @@
     NSMutableArray*         _sharedStrings;
     NSMutableDictionary*    _sharedObjects;
     NSUInteger              _sharedObjectCounter;
+    NSMutableDictionary*    _sharedClasses;
+    NSUInteger              _sharedClassCounter;
     NSMutableDictionary*    _versionByClassName;
     NSMutableDictionary<NSString*,NSString*>* _classNameMap;
     unsigned _systemVersion;

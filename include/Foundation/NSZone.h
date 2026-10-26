@@ -16,6 +16,14 @@ FOUNDATION_EXPORT void *NSZoneCalloc(NSZone *zone, NSUInteger numElems, NSUInteg
 FOUNDATION_EXPORT void *NSZoneRealloc(NSZone *zone, void *ptr, NSUInteger size);
 FOUNDATION_EXPORT void NSZoneFree(NSZone *zone, void *ptr);
 
+enum {
+    NSScannedOption = (1 << 0),
+    NSCollectorDisabledOption = (1 << 1)
+};
+
+FOUNDATION_EXPORT void *NSAllocateCollectable(NSUInteger size, NSUInteger options);
+FOUNDATION_EXPORT void *NSReallocateCollectable(void *ptr, NSUInteger size, NSUInteger options);
+
 #ifndef CF_CONSUMED
 #if __has_feature(attribute_cf_consumed)
 #define CF_CONSUMED __attribute__((cf_consumed))

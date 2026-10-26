@@ -130,9 +130,10 @@ static inline id newDecodedNumber(NSCoder *coder)
                 return [[NSNumber alloc] initWithDouble:val];
             }
             case _C_BOOL:
-            default:
-                [NSException raise:NSInternalInconsistencyException format:@"Inconsistent objCType"];
-                break;
+            {
+                BOOL val = *(BOOL*)buffer;
+                return [[NSNumber alloc] initWithBool:val];
+            }
         }
 
         return nil;
@@ -284,6 +285,8 @@ static inline id newDecodedNumber(NSCoder *coder)
                     encodeType = @encode(double);
                     break;
                 case _C_BOOL:
+                    encodeType = @encode(BOOL);
+                    break;
                 default:
                     [NSException raise:NSInternalInconsistencyException format:@"Inconsistent objCType"];
                     break;

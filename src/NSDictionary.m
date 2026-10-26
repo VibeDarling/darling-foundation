@@ -148,10 +148,12 @@ OBJC_PROTOCOL_IMPL_PUSH
     }
     else
     {
-        [coder decodeValueOfObjCType:@encode(int) at:&count];
+        int rawCount = 0;
+        [coder decodeValueOfObjCType:@encode(int) at:&rawCount];
+        count = (NSUInteger)rawCount;
 
         objects = malloc(count * sizeof(id));
-        keys = malloc(count *sizeof(id));
+        keys = malloc(count * sizeof(id));
         if (objects == NULL || keys == NULL)
         {
             free(objects);
@@ -162,14 +164,8 @@ OBJC_PROTOCOL_IMPL_PUSH
         }
         for (NSUInteger idx = 0; idx < count; idx++)
         {
-            id key = nil;
-            id object = nil;
-            [coder decodeValueOfObjCType:@encode(id) at:&key];
-            [coder decodeValueOfObjCType:@encode(id) at:&object];
-            if (key == nil || object == nil)
-            {
-                // fault?
-            }
+            id key = [coder decodeObject];
+            id object = [coder decodeObject];
             keys[idx] = [key autorelease];
             objects[idx] = [object autorelease];
         }

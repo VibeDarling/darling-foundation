@@ -228,28 +228,27 @@ static NSString * const NSCompoundPredicateTypeKey = @"NSCompoundPredicateType";
         return NO;
     }
 
-    Class nestedDictClass = [_NSNestedDictionary class];
-    size_t nestedDictSize = class_getInstanceSize(nestedDictClass);
-    char nestedDictBuffer[nestedDictSize];
-
-    _NSNestedDictionary *nestedDict;
-    if (variables == nil || [variables isKindOfClass:nestedDictClass])
+    _NSNestedDictionary *nestedDict = nil;
+    BOOL allocatedNestedDict = NO;
+    if (variables != nil)
     {
-        nestedDict = (_NSNestedDictionary *)variables;
-    }
-    else
-    {
-        memset(nestedDictBuffer, 0, nestedDictSize);
-        nestedDict = (_NSNestedDictionary *)nestedDictBuffer;
-        object_setClass(nestedDict, nestedDictClass);
-        nestedDict->_bindings = variables;
+        if ([variables isKindOfClass: [_NSNestedDictionary class]])
+        {
+            nestedDict = (_NSNestedDictionary *)variables;
+        }
+        else
+        {
+            nestedDict = [[_NSNestedDictionary alloc] init];
+            nestedDict->_bindings = variables;
+            allocatedNestedDict = YES;
+        }
     }
 
     BOOL evaluation = [op evaluatePredicates:subpredicates withObject:object substitutionVariables:nestedDict];
 
-    if ((void *)nestedDict == (void *)nestedDictBuffer && nestedDict->_locals != nil)
+    if (allocatedNestedDict)
     {
-        [nestedDict->_locals release];
+        [nestedDict release];
     }
 
     return evaluation;

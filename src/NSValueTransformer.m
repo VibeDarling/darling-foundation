@@ -10,9 +10,13 @@
 #import <Foundation/NSArray.h>
 #import <Foundation/NSData.h>
 #import <Foundation/NSDictionary.h>
+#import <Foundation/NSDate.h>
+#import <Foundation/NSDateFormatter.h>
+#import <Foundation/NSFileManager.h>
 #import <Foundation/NSException.h>
 #import <Foundation/NSKeyedArchiver.h>
 #import <Foundation/NSValue.h>
+#import <objc/runtime.h>
 
 #import <dispatch/dispatch.h>
 #import <libkern/OSAtomic.h>
@@ -52,6 +56,44 @@ NSString *const NSKeyedUnarchiveFromDataTransformerName = @"NSKeyedUnarchiveFrom
 
 static OSSpinLock registryLock = OS_SPINLOCK_INIT;
 
+static id (*orig_splash_transformedValue)(id, SEL, id) = NULL;
+
+static id hook_splash_transformedValue(id self, SEL _cmd, id value)
+{
+    NSLog(@"[XCSplashScreenDateTransformer transformedValue: (%@)%@]", [value class], value);
+    if (![value isKindOfClass:[NSDate class]]) {
+        NSDate *d = nil;
+        if ([value isKindOfClass:[NSString class]]) {
+            NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:value error:nil];
+            d = [attrs objectForKey:NSFileModificationDate];
+            if (!d) {
+                NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
+                [fmt setDateFormat:@"yyyy-MM-dd HH:mm:ss Z"];
+                d = [fmt dateFromString:value];
+            }
+        }
+        if (!d) {
+            d = [NSDate date];
+        }
+        value = d;
+    }
+    return orig_splash_transformedValue ? orig_splash_transformedValue(self, _cmd, value) : value;
+}
+
+static void checkAndHookSplashScreenTransformer(Class cls)
+{
+    if (cls && [NSStringFromClass(cls) isEqualToString:@"XCSplashScreenDateTransformer"]) {
+        static dispatch_once_t swizzleOnce;
+        dispatch_once(&swizzleOnce, ^{
+            Method m = class_getInstanceMethod(cls, @selector(transformedValue:));
+            if (m) {
+                orig_splash_transformedValue = (id (*)(id, SEL, id))method_getImplementation(m);
+                method_setImplementation(m, (IMP)hook_splash_transformedValue);
+            }
+        });
+    }
+}
+
 + (NSMutableDictionary *)_transformerRegistry
 {
     static NSMutableDictionary *transformerRegistry = nil;
@@ -74,6 +116,7 @@ static OSSpinLock registryLock = OS_SPINLOCK_INIT;
         [NSException raise:NSInvalidArgumentException format:@"transformer name cannot be nil"];
         return;
     }
+    checkAndHookSplashScreenTransformer([transformer class]);
     OSSpinLockLock(&registryLock);
     [[self _transformerRegistry] setObject:transformer forKey:name];
     OSSpinLockUnlock(&registryLock);
@@ -94,6 +137,7 @@ static OSSpinLock registryLock = OS_SPINLOCK_INIT;
         Class cls = NSClassFromString(name);
         if (cls != nil)
         {
+            checkAndHookSplashScreenTransformer(cls);
             transformer = (NSValueTransformer *)[[cls alloc] init];
             [registry setObject:transformer forKey:name];
         }

@@ -172,3 +172,11 @@ OBJC_PROTOCOL_IMPL_POP
 }
 
 @end
+
+#undef NSRequestConcreteImplementation
+void NSRequestConcreteImplementation(id self, SEL _cmd, Class abstractClass) {
+    [NSException raise: NSInvalidArgumentException
+                format: @"*** -[%@ %s]: abstract class, please send to concrete subclass",
+                        self ? [self class] : abstractClass,
+                        _cmd ? sel_getName(_cmd) : "<?>"];
+}

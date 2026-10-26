@@ -369,12 +369,22 @@ SINGLETON_RR()
 // Darling has no sudden-termination mechanism, so there is no state to track.
 @implementation NSProcessInfo (NSSuddenTermination)
 
+static NSInteger _suddenTerminationCount = 0;
+
 - (void)enableSuddenTermination
 {
+    if (_suddenTerminationCount > 0)
+        _suddenTerminationCount--;
 }
 
 - (void)disableSuddenTermination
 {
+    _suddenTerminationCount++;
+}
+
+- (NSInteger)_suddenTerminationDisablingCount
+{
+    return _suddenTerminationCount;
 }
 
 @end

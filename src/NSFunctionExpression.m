@@ -432,6 +432,11 @@ static NSString * const NSSelectorNameKey = @"NSSelectorName";
     }
 
     NSMethodSignature *sig = [target methodSignatureForSelector:cmd];
+    if (sig == nil)
+    {
+        free(argValues);
+        return nil;
+    }
     NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
     [inv setTarget:target];
     [inv setSelector:cmd];
@@ -442,7 +447,105 @@ static NSString * const NSSelectorNameKey = @"NSSelectorName";
     }
 
     [inv invoke];
-    [inv getReturnValue:&retVal];
+
+    const char *returnType = [sig methodReturnType];
+    switch (returnType[0])
+    {
+        case '@':
+            [inv getReturnValue:&retVal];
+            break;
+        case 'c':
+        case 'B':
+        {
+            char c = 0;
+            [inv getReturnValue:&c];
+            retVal = [NSNumber numberWithChar:c];
+            break;
+        }
+        case 'C':
+        {
+            unsigned char uc = 0;
+            [inv getReturnValue:&uc];
+            retVal = [NSNumber numberWithUnsignedChar:uc];
+            break;
+        }
+        case 's':
+        {
+            short s = 0;
+            [inv getReturnValue:&s];
+            retVal = [NSNumber numberWithShort:s];
+            break;
+        }
+        case 'S':
+        {
+            unsigned short us = 0;
+            [inv getReturnValue:&us];
+            retVal = [NSNumber numberWithUnsignedShort:us];
+            break;
+        }
+        case 'i':
+        {
+            int i = 0;
+            [inv getReturnValue:&i];
+            retVal = [NSNumber numberWithInt:i];
+            break;
+        }
+        case 'I':
+        {
+            unsigned int ui = 0;
+            [inv getReturnValue:&ui];
+            retVal = [NSNumber numberWithUnsignedInt:ui];
+            break;
+        }
+        case 'l':
+        {
+            long l = 0;
+            [inv getReturnValue:&l];
+            retVal = [NSNumber numberWithLong:l];
+            break;
+        }
+        case 'L':
+        {
+            unsigned long ul = 0;
+            [inv getReturnValue:&ul];
+            retVal = [NSNumber numberWithUnsignedLong:ul];
+            break;
+        }
+        case 'q':
+        {
+            long long q = 0;
+            [inv getReturnValue:&q];
+            retVal = [NSNumber numberWithLongLong:q];
+            break;
+        }
+        case 'Q':
+        {
+            unsigned long long uq = 0;
+            [inv getReturnValue:&uq];
+            retVal = [NSNumber numberWithUnsignedLongLong:uq];
+            break;
+        }
+        case 'f':
+        {
+            float f = 0;
+            [inv getReturnValue:&f];
+            retVal = [NSNumber numberWithFloat:f];
+            break;
+        }
+        case 'd':
+        {
+            double d = 0;
+            [inv getReturnValue:&d];
+            retVal = [NSNumber numberWithDouble:d];
+            break;
+        }
+        case 'v':
+            retVal = nil;
+            break;
+        default:
+            [inv getReturnValue:&retVal];
+            break;
+    }
 
     free(argValues);
 

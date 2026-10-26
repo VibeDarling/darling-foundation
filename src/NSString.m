@@ -288,11 +288,9 @@ static NSStringEncoding __NSDefaultCStringEncoding()
     }
     else
     {
-        NSUInteger length;
-        NSStringEncoding encoding;
-        [aDecoder decodeValueOfObjCType:@encode(NSStringEncoding) at:&encoding];
+        NSUInteger length = 0;
         void *bytes = [aDecoder decodeBytesWithReturnedLength:&length];
-        return [self initWithBytes:bytes length:length encoding:encoding];
+        return [self initWithBytes:bytes length:length encoding:NSUTF8StringEncoding];
     }
 }
 

@@ -51,6 +51,9 @@ static NSMutableArray<NSKeyBinding*>* bindingsByTypeForClassAndKey(Class class, 
 };
 
 static NSKeyBinding* bindingForClassAndKeyAndType(NSObject* object, Class class, NSString* key, NSKeyValueBindingOptions type) {
+	if (key == nil || [key length] == 0 || class == Nil) {
+		return nil;
+	}
 	NSMutableArray<NSKeyBinding*>* bindingsByType = bindingsByTypeForClassAndKey(class, key);
 	NSKeyBinding* binding = nil;
 	@synchronized(bindingsByType) {
@@ -369,7 +372,9 @@ static void raiseKeyValueException(NSString* reason, NSObject* object, NSString*
 			if (setter == nil) {
 				return nil;
 			}
-			return [[[_NSKeyBindingSetWrapper alloc] initWithAccessor: setter forKey: key isScalar: ivar_getTypeEncoding(ivar)[0] != _C_ID] autorelease];
+			const char* ivarType = ivar_getTypeEncoding(ivar);
+			BOOL isScalar = (ivarType && ivarType[0] != _C_ID);
+			return [[[_NSKeyBindingSetWrapper alloc] initWithAccessor: setter forKey: key isScalar: isScalar] autorelease];
 		}
 	} else {
 		if (type & NSKeyValueBindingTypeNoDirectAccess) {
@@ -399,6 +404,9 @@ static void raiseKeyValueException(NSString* reason, NSObject* object, NSString*
 
 - (NSKeyBinding*)createKeyValueBindingForKey: (NSString*)key typeMask: (NSKeyValueBindingOptions)mask
 {
+	if (key == nil || [key length] == 0) {
+		return nil;
+	}
 	if (mask & NSKeyValueBindingIsStored) {
 		if (!self.class.useStoredAccessor) {
 			mask &= ~NSKeyValueBindingIsStored;

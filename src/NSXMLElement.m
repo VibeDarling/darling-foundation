@@ -51,8 +51,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 }
 
 - copyWithZone: (NSZone *) zone {
-    NSUnimplementedMethod();
-    return 0;
+    NSXMLElement *copy = [super copyWithZone: zone];
+    copy->_attributes = [_attributes mutableCopyWithZone: zone];
+    copy->_namespaces = [_namespaces mutableCopyWithZone: zone];
+    return copy;
 }
 
 - (NSArray *) attributes {
