@@ -59,6 +59,7 @@
     unsigned _systemVersion;
 }
 
+@property (nonatomic, readonly)         NSUInteger pos;
 @property (nonatomic, readonly, copy)   NSData* data;
 @property (nonatomic, readonly)         BOOL    isAtEnd;
 @property (nonatomic) NSZone* objectZone;

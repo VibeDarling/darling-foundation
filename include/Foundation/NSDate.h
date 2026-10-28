@@ -49,6 +49,10 @@ typedef double NSTimeInterval;
 
 @end
 
-@interface NSCalendarDate : NSDate
+@interface NSCalendarDate : NSDate {
+    NSTimeInterval _ti;
+    id _timeZone;
+    id _format;
+}
 
 @end

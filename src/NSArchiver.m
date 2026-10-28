@@ -441,8 +441,10 @@ static NSMutableDictionary *encodedClassNames = nil;
 
     NSUInteger length = mdata.length;
     NSUInteger nextLabel = _nextObjectLabel;
+    NSUInteger nextClassLabel = _nextClassLabel;
     NSMutableDictionary *sharedStrings = [_sharedStrings mutableCopy];
     CFMutableDictionaryRef objectLabels = CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 0, _objectLabels);
+    CFMutableDictionaryRef classLabels = CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 0, _classLabels);
 
     @try
     {
@@ -455,10 +457,13 @@ static NSMutableDictionary *encodedClassNames = nil;
         {
             mdata.length = length;
             _nextObjectLabel = nextLabel;
+            _nextClassLabel = nextClassLabel;
             [_sharedStrings release];
             _sharedStrings = sharedStrings;
             CFRelease(_objectLabels);
             _objectLabels = objectLabels;
+            CFRelease(_classLabels);
+            _classLabels = classLabels;
         }
 
         _rootPass = WritingRoot;

@@ -604,6 +604,9 @@ static void NSKeyValueRaiseUnregistered(NSObject *receiver, NSObject *observer, 
 // Additional tests will be needed to confirm this behavior. If this IS the case, we should file a radar, and (ugh) attempt to duplicate the bug. 
 - (void)_removeObserver:(NSObject *)observer forProperty:(NSKeyValueProperty *)property optionalObservance:(NSKeyValueObservance *)observance
 {
+    if (property == nil || observer == nil)
+        return;
+
     NSKeyValueContainerClass *containerClass = property.containerClass;
     NSKeyValueObservationInfo *observationInfo = __NSKeyValueRetainedObservationInfoForObject(self, containerClass);
     if (observationInfo == nil)
@@ -634,9 +637,9 @@ static void NSKeyValueRaiseUnregistered(NSObject *receiver, NSObject *observer, 
     [observance release];
     if ([observationInfo observances].count == 0)
     {
-        if (object_getClass(self) != containerClass.originalClass)
+        [self setObservationInfo:nil];
+        if (containerClass.originalClass != Nil && object_getClass(self) != containerClass.originalClass)
         {
-            [self setObservationInfo:nil];
             object_setClass(self, containerClass.originalClass);
         }
     }
@@ -820,13 +823,20 @@ static void NSKVODeallocate(id self, SEL _cmd)
     [__NSKeyValueObserverRegisterationLock lock];
     while (index != NSNotFound)
     {
-        if (index < count)
+        if (index < [self count])
         {
             id obj = self[index];
             if (obj != nil)
             {
-                NSKeyValueProperty *property = _NSKeyValuePropertyForIsaAndKeyPath(object_getClass(obj), keyPath);
-                [obj _removeObserver:observer forProperty:property optionalObservance:nil];
+                Class cls = object_getClass(obj);
+                if (cls != Nil)
+                {
+                    NSKeyValueProperty *property = _NSKeyValuePropertyForIsaAndKeyPath(cls, keyPath);
+                    if (property != nil)
+                    {
+                        [obj _removeObserver:observer forProperty:property optionalObservance:nil];
+                    }
+                }
             }
         }
         index = [indexes indexGreaterThanIndex:index];  // for some reason, this deregisters in the same order as it registers, instead of reverse order. 
@@ -851,12 +861,16 @@ static void NSKVODeallocate(id self, SEL _cmd)
     [__NSKeyValueObserverRegisterationLock lock];
     while (index != NSNotFound)
     {
-        if (index < count)
+        if (index < [self count])
         {
             id obj = self[index];
             if (obj != nil)
             {
-                [obj removeObserver:observer forKeyPath:keyPath context:context];
+                Class cls = object_getClass(obj);
+                if (cls != Nil)
+                {
+                    [obj removeObserver:observer forKeyPath:keyPath context:context];
+                }
             }
         }
         index = [indexes indexGreaterThanIndex:index];

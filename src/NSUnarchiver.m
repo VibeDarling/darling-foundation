@@ -119,6 +119,11 @@ static const char* uniqueString(const char* str);
 {
     return _pos >= _data.length;
 }
+
+- (NSUInteger)pos
+{
+    return _pos;
+}
 - (Class)classForName:(NSString*)className
 {
    NSParameterAssert(className);
@@ -257,6 +262,18 @@ static const char* uniqueString(const char* str);
             }
             if (endMarker != EndOfObjectLabel)
             {
+                NSUInteger start = (_pos >= 16) ? _pos - 16 : 0;
+                NSUInteger len = ((start + 64) <= _data.length) ? 64 : (_data.length - start);
+                const unsigned char *b = [_data bytes];
+                NSMutableString *hex = [NSMutableString string];
+                for (NSUInteger i = 0; i < len; i++) {
+                    if (start + i == _pos) [hex appendString: @" ["];
+                    [hex appendFormat: @"%02x ", b[start + i]];
+                    if (start + i == _pos) [hex appendString: @"] "];
+                }
+                NSLog(@"NSUnarchiver: objectClass=%@ endMarker=0x%02x (expected 0x%02x) pos=%lu/%lu around:\n%@",
+                      NSStringFromClass(objectClass), ((unsigned) endMarker) & 0xff, ((unsigned) EndOfObjectLabel) & 0xff,
+                      (unsigned long)_pos, (unsigned long)_data.length, hex);
                 [NSException raise:NSInvalidArgumentException format:@"End of object label not found for [%@ initWithCoder:], got 0x%02x", NSStringFromClass(objectClass), ((unsigned) endMarker) & 0xff];
                 return NO;
             }
@@ -322,22 +339,33 @@ static const char* uniqueString(const char* str);
             _versionByClassName[className] = @(version);
             
             *outClass = [self classForName:className];
-            if(!*outClass)
-            {
-               NSUDEBUG(@"NSUnarchiver readClass: classForName %@ failed\n", className);
-                return NO;
-            }
-            
             NSNumber* nextLabel = @(_sharedClassCounter++);
-            NSUDEBUG(@"NSUnarchiver readClass: next label %@ is for class %@\n", nextLabel, className);
-            _sharedClasses[nextLabel] = *outClass;
-            
-            // We do not check the super-class
-            Class superClass;
+            if (*outClass) {
+                _sharedClasses[nextLabel] = *outClass;
+            }
+
+            Class superClass = Nil;
             if(![self readClass:&superClass])
             {
                NSUDEBUG(@"NSUnarchiver readClass: failed to read super class\n");
                 return NO;
+            }
+
+            if (!*outClass)
+            {
+                *outClass = objc_lookUpClass(className.UTF8String);
+                if (!*outClass && superClass != Nil) {
+                    *outClass = objc_allocateClassPair(superClass, className.UTF8String, 0);
+                    if (*outClass)
+                        objc_registerClassPair(*outClass);
+                    else
+                        *outClass = objc_lookUpClass(className.UTF8String) ?: superClass;
+                }
+                if (!*outClass) {
+                    NSLog(@"NSUnarchiver readClass: classForName %@ failed and cannot create from superclass\n", className);
+                    return NO;
+                }
+                _sharedClasses[nextLabel] = *outClass;
             }
             return YES;
         }
@@ -1010,7 +1038,9 @@ static BOOL typesAreCompatible(const char *t1, const char *t2)
 {
     NSString* string;
     if(![self decodeSharedString:&string])
+    {
         return;
+    }
 
     const char *str = [string cStringUsingEncoding:NSASCIIStringEncoding];
     if(!typesAreCompatible(str, types))

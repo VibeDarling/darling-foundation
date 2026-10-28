@@ -87,7 +87,20 @@
         additionInfoPtr->originalObservable = object;
         additionInfoPtr->observance = observance;
         NSObject *firstLevel = [object valueForKey:self.relationshipKey];
-        [firstLevel addObserver:observance forKeyPath:self.keyPathFromRelatedObject options:newOptions context:newContext]; //this is the scariest line of code I think I've written yet
+        if ([firstLevel conformsToProtocol:@protocol(NSFastEnumeration)])
+        {
+            for (id member in (id <NSFastEnumeration>) firstLevel)
+            {
+                if ([member isKindOfClass: [NSObject class]])
+                {
+                    [member addObserver:observance forKeyPath:self.keyPathFromRelatedObject options:newOptions context:newContext];
+                }
+            }
+        }
+        else
+        {
+            [firstLevel addObserver:observance forKeyPath:self.keyPathFromRelatedObject options:newOptions context:newContext];
+        }
         *additionInfoPtr = savedAddtionInfo;
     }
     if (forwardingValues.recursedMutableDictionary != nil)
@@ -137,7 +150,20 @@
         {
             lastImplicitRemovalInfo->property = self;
         }
-        [nextObject removeObserver:observance forKeyPath:self.keyPathFromRelatedObject];
+        if ([nextObject conformsToProtocol:@protocol(NSFastEnumeration)])
+        {
+            for (id member in (id <NSFastEnumeration>) nextObject)
+            {
+                if ([member isKindOfClass: [NSObject class]])
+                {
+                    [member removeObserver:observance forKeyPath:self.keyPathFromRelatedObject];
+                }
+            }
+        }
+        else
+        {
+            [nextObject removeObserver:observance forKeyPath:self.keyPathFromRelatedObject];
+        }
         *lastImplicitRemovalInfo = saved;
     }
     [self.relationshipProperty object:object didRemoveObservance:observance recurse:shouldRecurse];
