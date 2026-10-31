@@ -1,5 +1,11 @@
 project(foundation)
 
+# Run loops, strings and collections are on every app's hot path; built
+# optimized even when no build type is set (as Cocotron is).
+if(NOT CMAKE_BUILD_TYPE)
+	add_compile_options(-O2)
+endif()
+
 remove_sdk_framework(Foundation)
 
 add_subdirectory(services/filecoordinationd)
