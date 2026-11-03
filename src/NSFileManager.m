@@ -187,7 +187,10 @@ static void initializeDirectories(NSMutableSet *paths, NSSearchPathDirectory dir
 
 - (BOOL)fileExistsAtPath:(NSString *)path
 {
-    return [self fileExistsAtPath:path isDirectory:NULL];
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.exists.enter\n", sizeof("foundation.files.exists.enter\n") - 1);
+    BOOL result = [self fileExistsAtPath:path isDirectory:NULL];
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.exists.return\n", sizeof("foundation.files.exists.return\n") - 1);
+    return result;
 }
 
 - (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory
