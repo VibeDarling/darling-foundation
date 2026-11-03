@@ -508,6 +508,11 @@ static inline BOOL _NSFileAccessibleForMode(NSString *path, int mode)
     return urls;
 }
 
+- (NSURL *)temporaryDirectory
+{
+    return [NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES];
+}
+
 - (NSArray *)URLsForDirectory:(NSSearchPathDirectory)directory inDomains:(NSSearchPathDomainMask)domainMask {
     darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.directories.enter\n", sizeof("foundation.files.directories.enter\n") - 1);
     // Only NSUserDomain is supported on iOS
