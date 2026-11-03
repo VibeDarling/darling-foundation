@@ -362,6 +362,46 @@ if (TARGET_ARM64 OR TARGET_x86_64)
     endforeach()
 endif()
 
+# This optional source-built supplement adds Swift Foundation APIs without
+# replacing the separately provenance-checked base overlay.
+option(DARLING_FOUNDATION_SWIFT_SUPPLEMENT "Build the arm64 Swift Foundation supplement" OFF)
+set(DARLING_FOUNDATION_SWIFT_SDK "" CACHE PATH "Public iOS SDK for Swift Foundation additions")
+set(DARLING_FOUNDATION_SWIFT_SHIMS "" CACHE PATH "Swift shims matching the iOS core module")
+set(DARLING_FOUNDATION_SWIFT_APINOTES "" CACHE PATH "API notes matching the iOS core module")
+if(DARLING_FOUNDATION_SWIFT_SUPPLEMENT)
+    if(NOT TARGET Foundation_arm64)
+        message(FATAL_ERROR "Swift Foundation supplement requires the arm64 Foundation target")
+    endif()
+    foreach(required IN ITEMS DARLING_SWIFT_TOOLCHAIN DARLING_SWIFT_IOS_STDLIB
+            DARLING_FOUNDATION_SWIFT_SDK DARLING_FOUNDATION_SWIFT_SHIMS DARLING_FOUNDATION_SWIFT_APINOTES)
+        if(NOT IS_DIRECTORY "${${required}}")
+            message(FATAL_ERROR "${required} must name an existing directory")
+        endif()
+    endforeach()
+    set(supplement_dir "${CMAKE_CURRENT_BINARY_DIR}/swift")
+    set(supplement "${supplement_dir}/libDarlingFoundationSupplement.dylib")
+    add_custom_command(OUTPUT "${supplement}"
+        COMMAND ${CMAKE_COMMAND} -E env
+            "OUT=${supplement_dir}"
+            "SWIFT_TOOLCHAIN=${DARLING_SWIFT_TOOLCHAIN}"
+            "SWIFT_CORE_MODULES=${DARLING_SWIFT_IOS_STDLIB}"
+            "SWIFT_SHIMS=${DARLING_FOUNDATION_SWIFT_SHIMS}"
+            "SWIFT_APINOTES=${DARLING_FOUNDATION_SWIFT_APINOTES}"
+            "IOS_SDK=${DARLING_FOUNDATION_SWIFT_SDK}"
+            "LD_LIBRARY_PATH=${DARLING_SWIFT_HOST_LIBS}"
+            bash "${CMAKE_CURRENT_SOURCE_DIR}/swift/build.sh"
+        DEPENDS swift/build.sh swift/NSSortDescriptor.swift
+            swift/Bridge/FoundationSupplementBridge.h swift/Bridge/FoundationSupplementBridge.m
+            swift/Bridge/module.modulemap "${DARLING_SWIFT_TOOLCHAIN}/bin/swiftc"
+        VERBATIM COMMENT "Building source-only Swift Foundation supplement")
+    add_custom_target(FoundationSwiftSupplement_arm64 DEPENDS "${supplement}")
+    add_dependencies(Foundation_arm64 FoundationSwiftSupplement_arm64)
+    set_property(TARGET Foundation_arm64 APPEND_STRING PROPERTY LINK_FLAGS
+        " -Wl,-reexport_library,${supplement}")
+    set_property(TARGET Foundation_arm64 APPEND PROPERTY LINK_DEPENDS "${supplement}")
+    install(PROGRAMS "${supplement}" DESTINATION libexec/darling/usr/lib/swift)
+endif()
+
 add_darling_executable(defaults tools/defaults.m)
 target_link_libraries(defaults Foundation)
 install(TARGETS defaults DESTINATION libexec/darling/usr/bin)

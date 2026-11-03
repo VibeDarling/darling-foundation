@@ -1,0 +1,4 @@
+module DarlingFoundationSupplementBridge {
+    header "FoundationSupplementBridge.h"
+    export *
+}
