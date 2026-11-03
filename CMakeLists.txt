@@ -348,20 +348,19 @@ endif (TARGET_ARM64)
 # arm64 and x86_64. Runtime dependencies (@rpath/libswiftCore.dylib) are resolved automatically via dyld's
 # built-in fallback to /usr/lib/swift/.
 set(SWIFT_FOUNDATION_OVERLAY "${CMAKE_SOURCE_DIR}/src/external/swift/libswiftFoundation.dylib")
-if (EXISTS "${SWIFT_FOUNDATION_OVERLAY}")
-if (TARGET_ARM64)
-set_property(
-	TARGET Foundation_arm64 APPEND_STRING PROPERTY
-	LINK_FLAGS " -Wl,-reexport_library,${SWIFT_FOUNDATION_OVERLAY}"
-)
-endif (TARGET_ARM64)
-if (TARGET_x86_64)
-set_property(
-	TARGET Foundation_x86_64 APPEND_STRING PROPERTY
-	LINK_FLAGS " -Wl,-reexport_library,${SWIFT_FOUNDATION_OVERLAY}"
-)
-endif (TARGET_x86_64)
-endif ()
+if (TARGET_ARM64 OR TARGET_x86_64)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/SwiftFoundationOverlay.cmake")
+    foundation_validate_swift_overlay("${SWIFT_FOUNDATION_OVERLAY}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${SWIFT_FOUNDATION_OVERLAY}")
+    foreach(architecture IN ITEMS arm64 x86_64)
+        if(TARGET Foundation_${architecture})
+            set_property(TARGET Foundation_${architecture} APPEND_STRING PROPERTY
+                LINK_FLAGS " -Wl,-reexport_library,${SWIFT_FOUNDATION_OVERLAY}")
+            set_property(TARGET Foundation_${architecture} APPEND PROPERTY
+                LINK_DEPENDS "${SWIFT_FOUNDATION_OVERLAY}")
+        endif()
+    endforeach()
+endif()
 
 add_darling_executable(defaults tools/defaults.m)
 target_link_libraries(defaults Foundation)
