@@ -5,6 +5,7 @@
 //  Copyright (c) 2014 Apportable. All rights reserved.
 //
 
+#include <darling-boundary-diagnostics.h>
 #import <dispatch/dispatch.h>
 #import <dirent.h>
 #import <errno.h>
@@ -505,9 +506,11 @@ static inline BOOL _NSFileAccessibleForMode(NSString *path, int mode)
 }
 
 - (NSArray *)URLsForDirectory:(NSSearchPathDirectory)directory inDomains:(NSSearchPathDomainMask)domainMask {
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.directories.enter\n", sizeof("foundation.files.directories.enter\n") - 1);
     // Only NSUserDomain is supported on iOS
     if (domainMask != NSUserDomainMask)
     {
+        darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.directories.return\n", sizeof("foundation.files.directories.return\n") - 1);
         return @[];
     }
     NSArray *pathsForDirectory = NSSearchPathForDirectoriesInDomains(directory, domainMask, YES);
@@ -517,7 +520,9 @@ static inline BOOL _NSFileAccessibleForMode(NSString *path, int mode)
         [urls addObject:[NSURL fileURLWithPath:s]];
     }
 
-    return [[urls copy] autorelease];
+    NSArray *result = [[urls copy] autorelease];
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.directories.return\n", sizeof("foundation.files.directories.return\n") - 1);
+    return result;
 }
 
 - (NSURL *)URLForDirectory:(NSSearchPathDirectory)directory inDomain:(NSSearchPathDomainMask)domain appropriateForURL:(NSURL *)url create:(BOOL)shouldCreate error:(NSError **)error
@@ -559,6 +564,7 @@ static inline BOOL _NSFileAccessibleForMode(NSString *path, int mode)
 
 - (BOOL)createDirectoryAtURL:(NSURL *)url withIntermediateDirectories:(BOOL)createIntermediates attributes:(NSDictionary *)attributes error:(NSError **)error
 {
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.create-directory.enter\n", sizeof("foundation.files.create-directory.enter\n") - 1);
     if (createIntermediates)
     {
         NSArray *comps = [url pathComponents];
@@ -580,6 +586,7 @@ static inline BOOL _NSFileAccessibleForMode(NSString *path, int mode)
                 isDir = YES;
                 if (![self createDirectoryAtURL:recomposed withIntermediateDirectories:NO attributes:attributes error:error])
                 {
+                    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.create-directory.return\n", sizeof("foundation.files.create-directory.return\n") - 1);
                     return NO;
                 }
             }
@@ -591,9 +598,11 @@ static inline BOOL _NSFileAccessibleForMode(NSString *path, int mode)
                         NSLocalizedDescriptionKey: @"Found a file where a directory was expected"
                     }];
                 }
+                darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.create-directory.return\n", sizeof("foundation.files.create-directory.return\n") - 1);
                 return NO;
             }
         }
+        darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.create-directory.return\n", sizeof("foundation.files.create-directory.return\n") - 1);
         return YES;
     }
     else
@@ -617,9 +626,11 @@ static inline BOOL _NSFileAccessibleForMode(NSString *path, int mode)
                     NSLocalizedDescriptionKey: [NSString stringWithUTF8String:strerror(errno)]
                 }];
             }
+            darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.create-directory.return\n", sizeof("foundation.files.create-directory.return\n") - 1);
             return NO;
         }
 
+        darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.create-directory.return\n", sizeof("foundation.files.create-directory.return\n") - 1);
         return YES;
     }
 }
@@ -884,7 +895,10 @@ static NSError *_NSErrorWithFilePathAndErrno(id path, int code)
 
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error
 {
-    return [self directoryContentsAtPath:path matchingExtension:nil options:0 keepExtension:YES error:error];
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.list.enter\n", sizeof("foundation.files.list.enter\n") - 1);
+    NSArray *result = [self directoryContentsAtPath:path matchingExtension:nil options:0 keepExtension:YES error:error];
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.files.list.return\n", sizeof("foundation.files.list.return\n") - 1);
+    return result;
 }
 
 - (NSArray *)subpathsOfDirectoryAtPath:(NSString *)path error:(NSError **)error
