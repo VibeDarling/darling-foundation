@@ -12,3 +12,13 @@ extension URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
 }
+
+@available(iOS 16.0, *)
+@_originallyDefinedIn(module: "Foundation", iOS 16.0)
+extension URL {
+    /// The path, percent-encoded unless asked otherwise (URL.path decodes it).
+    public func path(percentEncoded: Bool = true) -> String {
+        guard percentEncoded else { return path }
+        return URLComponents(url: self, resolvingAgainstBaseURL: true)?.percentEncodedPath ?? path
+    }
+}

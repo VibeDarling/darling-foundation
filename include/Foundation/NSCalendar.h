@@ -116,6 +116,8 @@ FOUNDATION_EXPORT const NSCalendarIdentifier NSCalendarIdentifierRepublicOfChina
 - (NSInteger)week;
 - (NSInteger)weekday;
 - (NSInteger)weekdayOrdinal;
+- (NSInteger)valueForComponent:(NSCalendarUnit)unit;
+- (void)setValue:(NSInteger)value forComponent:(NSCalendarUnit)unit;
 - (NSInteger)quarter;
 - (NSInteger)weekOfMonth;
 - (NSInteger)weekOfYear;

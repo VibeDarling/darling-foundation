@@ -7,7 +7,7 @@ mkdir -p "$OUT/resource"
 ln -sfn "$SWIFT_TOOLCHAIN/lib/swift/clang" "$OUT/resource/clang"
 ln -sfn "$SWIFT_SHIMS" "$OUT/resource/shims"
 ln -sfn "$SWIFT_APINOTES" "$OUT/resource/apinotes"
-"$SWIFT_TOOLCHAIN/bin/swiftc" -frontend -c "$here/NSSortDescriptor.swift" -whole-module-optimization \
+"$SWIFT_TOOLCHAIN/bin/swiftc" -frontend -c "$here/NSSortDescriptor.swift" "$here/FormatStyles.swift" -whole-module-optimization \
     -target arm64-apple-ios16.0 -sdk "$IOS_SDK" -resource-dir "$OUT/resource" \
     -module-cache-path "$OUT/module-cache" -I "$SWIFT_CORE_MODULES" -I "$here/Bridge" \
     -module-name Foundation -import-underlying-module -swift-version 5 -enable-library-evolution -parse-as-library -O \
@@ -24,7 +24,27 @@ ln -sfn "$SWIFT_APINOTES" "$OUT/resource/apinotes"
     -disable-implicit-concurrency-module-import -disable-implicit-string-processing-module-import \
     -o "$OUT/URLDirectories.o"
 "$SWIFT_TOOLCHAIN/bin/clang" -c -O2 -fblocks -target arm64-apple-ios16.0 -isysroot "$IOS_SDK" -I "$here/../../../include" "$here/Bridge/FoundationSupplementBridge.m" -o "$OUT/FoundationSupplementBridge.o"
+# FormatStyles.swift's stand-in Date stays private: apps link the overlay's.
 "${LD64_LLD:-ld64.lld}" -dylib -arch arm64 -platform_version ios 16.0 16.5 -syslibroot "$IOS_SDK" \
     -ignore_auto_link -install_name /usr/lib/swift/libDarlingFoundationSupplement.dylib \
+    -unexported_symbol '_$s10Foundation4DateVMa' -unexported_symbol '_$s10Foundation4DateVMn' \
+    -unexported_symbol '_$s10Foundation4DateVN' \
     -o "$OUT/libDarlingFoundationSupplement.dylib" "$OUT/FoundationSupplement.o" "$OUT/URLDirectories.o" "$OUT/FoundationSupplementBridge.o" \
     -L "$IOS_SDK/usr/lib/swift" -lswiftCore -lswiftObjectiveC -lswiftDarwin -lswiftCoreFoundation -lswiftDispatch -framework Foundation -lobjc -lSystem
+# Darling's frameworks are macOS images, and its dyld refuses an iOS one in a
+# macOS process. The SDK's stubs only link for iOS, so mark the result macOS.
+python3 - "$OUT/libDarlingFoundationSupplement.dylib" <<'PY'
+import struct, sys
+path = sys.argv[1]
+with open(path, "r+b") as f:
+    data = bytearray(f.read())
+    ncmds = struct.unpack_from("<I", data, 16)[0]
+    offset = 32
+    for _ in range(ncmds):
+        cmd, size = struct.unpack_from("<II", data, offset)
+        if cmd == 0x32:  # LC_BUILD_VERSION: platform, minos, sdk
+            struct.pack_into("<III", data, offset + 8, 1, 11 << 16, 11 << 16)
+        offset += size
+    f.seek(0)
+    f.write(data)
+PY

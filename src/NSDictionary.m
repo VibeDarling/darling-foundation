@@ -421,3 +421,33 @@ OBJC_PROTOCOL_IMPL_POP
 }
 
 @end
+
+// The bridging methods the Swift Foundation overlay adds to NSDictionary in an @objc extension. Swift
+// code calls them by selector whenever it subscripts an NSDictionary, but the arm64 overlay was built
+// without that extension, so they are provided here.
+@implementation NSDictionary (NSSwiftBridging)
+
+- (id)__swiftInitWithDictionary_NSDictionary:(NSDictionary *)dictionary
+{
+    return [self initWithDictionary:dictionary];
+}
+
+- (id)__swift_objectForKeyedSubscript:(id)key
+{
+    return [self objectForKey:key];
+}
+
+@end
+
+@implementation NSMutableDictionary (NSSwiftBridging)
+
+- (void)__swift_setObject:(id)object forKeyedSubscript:(id)key
+{
+    if (object) {
+        [self setObject:object forKey:key];
+    } else {
+        [self removeObjectForKey:key];
+    }
+}
+
+@end

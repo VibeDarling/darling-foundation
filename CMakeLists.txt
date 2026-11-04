@@ -390,7 +390,7 @@ if(DARLING_FOUNDATION_SWIFT_SUPPLEMENT)
             "IOS_SDK=${DARLING_FOUNDATION_SWIFT_SDK}"
             "LD_LIBRARY_PATH=${DARLING_SWIFT_HOST_LIBS}"
             bash "${CMAKE_CURRENT_SOURCE_DIR}/swift/build.sh"
-        DEPENDS swift/build.sh swift/NSSortDescriptor.swift swift/URLDirectories.swift
+        DEPENDS swift/build.sh swift/NSSortDescriptor.swift swift/URLDirectories.swift swift/FormatStyles.swift
             swift/Bridge/FoundationSupplementBridge.h swift/Bridge/FoundationSupplementBridge.m
             swift/Bridge/module.modulemap "${DARLING_SWIFT_TOOLCHAIN}/bin/swiftc"
         VERBATIM COMMENT "Building source-only Swift Foundation supplement")
