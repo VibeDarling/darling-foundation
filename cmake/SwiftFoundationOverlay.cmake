@@ -1,7 +1,7 @@
-# Artifact identity from darling-swift 0289238b54b79f13c2e49908c52302e58d748a1a,
+# Artifact identity from darling-swift a332a820861555d2e7076b0648da51094386e9d1,
 # tracked libswiftFoundation.dylib LFS pointer. Update with that pinned source metadata.
 function(foundation_validate_swift_overlay overlay)
-    set(expected_sha256 "aebf3c00041c5e27b2a8620b4f8fa840fc5af2edb109b356a546c5596d083b98")
+    set(expected_sha256 "5668036099d1df6fee218a63c96777b9e76a75b629297250ff081a64f37dd582")
     if(NOT EXISTS "${overlay}" OR IS_DIRECTORY "${overlay}")
         message(FATAL_ERROR
             "Required Swift Foundation overlay is missing: ${overlay}. Hydrate the pinned "
