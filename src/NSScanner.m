@@ -867,7 +867,7 @@ static inline NSUInteger skipSkipSet(NSScanner *self, NSString *s)
 {
     if (string == nil)
     {
-        NSLog(@"NSScanner: nil string argument, caller stack:\n%@", [[NSThread callStackSymbols] componentsJoinedByString:@"\n"]);
+        NSLog(@"NSScanner: nil string argument");
         string = @"";
     }
     self = [super init];

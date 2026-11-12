@@ -379,3 +379,75 @@ OBJC_PROTOCOL_IMPL_POP
 }
 
 @end
+
+// The private messages CoreFoundation sends an NSDictionary that is not one of its own (see
+// CF_OBJC_FUNCDISPATCHV in CFDictionary.c), such as Swift's bridged dictionaries: CF functions
+// called on those, CFDictionaryGetValueIfPresent for one, would otherwise raise.
+@implementation NSDictionary (NSCFDictionaryDispatch)
+
+- (BOOL)__getValue:(id *)value forKey:(id)key
+{
+    id object = [self objectForKey:key];
+    if (object != nil && value != NULL) *value = object;
+    return object != nil;
+}
+
+- (BOOL)containsKey:(id)key
+{
+    return [self objectForKey:key] != nil;
+}
+
+- (NSUInteger)countForKey:(id)key
+{
+    return [self objectForKey:key] != nil ? 1 : 0;
+}
+
+- (void)__apply:(void (*)(const void *, const void *, void *))applier context:(void *)context
+{
+    for (id key in [self allKeys]) {
+        applier(key, [self objectForKey:key], context);
+    }
+}
+
+@end
+
+@implementation NSMutableDictionary (NSCFDictionaryDispatch)
+
+- (void)__addObject:(id)object forKey:(id)key
+{
+    if ([self objectForKey:key] == nil) {
+        [self setObject:object forKey:key];
+    }
+}
+
+@end
+
+// The bridging methods the Swift Foundation overlay adds to NSDictionary in an @objc extension. Swift
+// code calls them by selector whenever it subscripts an NSDictionary, but the arm64 overlay was built
+// without that extension, so they are provided here.
+@implementation NSDictionary (NSSwiftBridging)
+
+- (id)__swiftInitWithDictionary_NSDictionary:(NSDictionary *)dictionary
+{
+    return [self initWithDictionary:dictionary];
+}
+
+- (id)__swift_objectForKeyedSubscript:(id)key
+{
+    return [self objectForKey:key];
+}
+
+@end
+
+@implementation NSMutableDictionary (NSSwiftBridging)
+
+- (void)__swift_setObject:(id)object forKeyedSubscript:(id)key
+{
+    if (object) {
+        [self setObject:object forKey:key];
+    } else {
+        [self removeObjectForKey:key];
+    }
+}
+
+@end

@@ -5,6 +5,7 @@
 //  Copyright (c) 2014 Apportable. All rights reserved.
 //
 
+#include <darling-boundary-diagnostics.h>
 #import <Foundation/NSURL.h>
 #import <Foundation/NSFileManager.h>
 #import <Foundation/NSException.h>
@@ -195,10 +196,13 @@ OBJC_PROTOCOL_IMPL_PUSH
 
 - (NSString *)path
 {
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.url.path-property.enter\n", sizeof("foundation.url.path-property.enter\n") - 1);
     CFURLRef absolute = CFURLCopyAbsoluteURL([self _cfurl]);
     NSString *path = (NSString *)CFURLCopyFileSystemPath(absolute, kCFURLPOSIXPathStyle);
     CFRelease(absolute);
-    return [path autorelease];
+    NSString *result = [path autorelease];
+    darling_diagnostic_send(getenv("DARLING_BOUNDARY_SOCKET"), "foundation.url.path-property.return\n", sizeof("foundation.url.path-property.return\n") - 1);
+    return result;
 }
 
 - (NSString *)relativePath

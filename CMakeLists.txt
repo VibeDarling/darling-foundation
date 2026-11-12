@@ -1,5 +1,11 @@
 project(foundation)
 
+# Run loops, strings and collections are on every app's hot path; built
+# optimized even when no build type is set (as Cocotron is).
+if(NOT CMAKE_BUILD_TYPE)
+	add_compile_options(-O2)
+endif()
+
 remove_sdk_framework(Foundation)
 
 add_subdirectory(services/filecoordinationd)
@@ -342,20 +348,59 @@ endif (TARGET_ARM64)
 # arm64 and x86_64. Runtime dependencies (@rpath/libswiftCore.dylib) are resolved automatically via dyld's
 # built-in fallback to /usr/lib/swift/.
 set(SWIFT_FOUNDATION_OVERLAY "${CMAKE_SOURCE_DIR}/src/external/swift/libswiftFoundation.dylib")
-if (EXISTS "${SWIFT_FOUNDATION_OVERLAY}")
-if (TARGET_ARM64)
-set_property(
-	TARGET Foundation_arm64 APPEND_STRING PROPERTY
-	LINK_FLAGS " -Wl,-reexport_library,${SWIFT_FOUNDATION_OVERLAY}"
-)
-endif (TARGET_ARM64)
-if (TARGET_x86_64)
-set_property(
-	TARGET Foundation_x86_64 APPEND_STRING PROPERTY
-	LINK_FLAGS " -Wl,-reexport_library,${SWIFT_FOUNDATION_OVERLAY}"
-)
-endif (TARGET_x86_64)
-endif ()
+if (TARGET_ARM64 OR TARGET_x86_64)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/SwiftFoundationOverlay.cmake")
+    foundation_validate_swift_overlay("${SWIFT_FOUNDATION_OVERLAY}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${SWIFT_FOUNDATION_OVERLAY}")
+    foreach(architecture IN ITEMS arm64 x86_64)
+        if(TARGET Foundation_${architecture})
+            set_property(TARGET Foundation_${architecture} APPEND_STRING PROPERTY
+                LINK_FLAGS " -Wl,-reexport_library,${SWIFT_FOUNDATION_OVERLAY}")
+            set_property(TARGET Foundation_${architecture} APPEND PROPERTY
+                LINK_DEPENDS "${SWIFT_FOUNDATION_OVERLAY}")
+        endif()
+    endforeach()
+endif()
+
+# This optional source-built supplement adds Swift Foundation APIs without
+# replacing the separately provenance-checked base overlay.
+option(DARLING_FOUNDATION_SWIFT_SUPPLEMENT "Build the arm64 Swift Foundation supplement" OFF)
+set(DARLING_FOUNDATION_SWIFT_SDK "" CACHE PATH "Public iOS SDK for Swift Foundation additions")
+set(DARLING_FOUNDATION_SWIFT_SHIMS "" CACHE PATH "Swift shims matching the iOS core module")
+set(DARLING_FOUNDATION_SWIFT_APINOTES "" CACHE PATH "API notes matching the iOS core module")
+if(DARLING_FOUNDATION_SWIFT_SUPPLEMENT)
+    if(NOT TARGET Foundation_arm64)
+        message(FATAL_ERROR "Swift Foundation supplement requires the arm64 Foundation target")
+    endif()
+    foreach(required IN ITEMS DARLING_SWIFT_TOOLCHAIN DARLING_SWIFT_IOS_STDLIB
+            DARLING_FOUNDATION_SWIFT_SDK DARLING_FOUNDATION_SWIFT_SHIMS DARLING_FOUNDATION_SWIFT_APINOTES)
+        if(NOT IS_DIRECTORY "${${required}}")
+            message(FATAL_ERROR "${required} must name an existing directory")
+        endif()
+    endforeach()
+    set(supplement_dir "${CMAKE_CURRENT_BINARY_DIR}/swift")
+    set(supplement "${supplement_dir}/libDarlingFoundationSupplement.dylib")
+    add_custom_command(OUTPUT "${supplement}"
+        COMMAND ${CMAKE_COMMAND} -E env
+            "OUT=${supplement_dir}"
+            "SWIFT_TOOLCHAIN=${DARLING_SWIFT_TOOLCHAIN}"
+            "SWIFT_CORE_MODULES=${DARLING_SWIFT_IOS_STDLIB}"
+            "SWIFT_SHIMS=${DARLING_FOUNDATION_SWIFT_SHIMS}"
+            "SWIFT_APINOTES=${DARLING_FOUNDATION_SWIFT_APINOTES}"
+            "IOS_SDK=${DARLING_FOUNDATION_SWIFT_SDK}"
+            "LD_LIBRARY_PATH=${DARLING_SWIFT_HOST_LIBS}"
+            bash "${CMAKE_CURRENT_SOURCE_DIR}/swift/build.sh"
+        DEPENDS swift/build.sh swift/NSSortDescriptor.swift swift/URLDirectories.swift swift/FormatStyles.swift
+            swift/Bridge/FoundationSupplementBridge.h swift/Bridge/FoundationSupplementBridge.m
+            swift/Bridge/module.modulemap "${DARLING_SWIFT_TOOLCHAIN}/bin/swiftc"
+        VERBATIM COMMENT "Building source-only Swift Foundation supplement")
+    add_custom_target(FoundationSwiftSupplement_arm64 DEPENDS "${supplement}")
+    add_dependencies(Foundation_arm64 FoundationSwiftSupplement_arm64)
+    set_property(TARGET Foundation_arm64 APPEND_STRING PROPERTY LINK_FLAGS
+        " -Wl,-reexport_library,${supplement}")
+    set_property(TARGET Foundation_arm64 APPEND PROPERTY LINK_DEPENDS "${supplement}")
+    install(PROGRAMS "${supplement}" DESTINATION libexec/darling/usr/lib/swift)
+endif()
 
 add_darling_executable(defaults tools/defaults.m)
 target_link_libraries(defaults Foundation)

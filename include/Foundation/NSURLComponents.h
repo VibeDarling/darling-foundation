@@ -4,7 +4,9 @@
 
 #import <Foundation/NSArray.h>
 
-@interface NSURLComponents : NSObject {
+@class NSNumber;
+
+@interface NSURLComponents : NSObject <NSCopying> {
     void *_components;
 }
 
@@ -19,5 +21,32 @@
 @property(copy) NSString *scheme;
 @property(copy) NSString *host;
 @property(nullable, readonly, copy) NSURL *URL;
+- (nullable NSURL *)URLRelativeToURL:(nullable NSURL *)baseURL;
+@property(nullable, readonly, copy) NSString *string;
+
+@property(nullable, copy) NSString *user;
+@property(nullable, copy) NSString *password;
+@property(nullable, copy) NSNumber *port;
+@property(nullable, copy) NSString *path;
+@property(nullable, copy) NSString *query;
+@property(nullable, copy) NSString *fragment;
+
+@property(nullable, copy) NSString *percentEncodedUser;
+@property(nullable, copy) NSString *percentEncodedPassword;
+@property(nullable, copy) NSString *percentEncodedHost;
+@property(nullable, copy) NSString *encodedHost;
+@property(nullable, copy) NSString *percentEncodedPath;
+@property(nullable, copy) NSString *percentEncodedQuery;
+@property(nullable, copy) NSString *percentEncodedFragment;
+@property(nullable, copy) NSArray<NSURLQueryItem *> *percentEncodedQueryItems;
+
+@property(readonly) NSRange rangeOfScheme;
+@property(readonly) NSRange rangeOfUser;
+@property(readonly) NSRange rangeOfPassword;
+@property(readonly) NSRange rangeOfHost;
+@property(readonly) NSRange rangeOfPort;
+@property(readonly) NSRange rangeOfPath;
+@property(readonly) NSRange rangeOfQuery;
+@property(readonly) NSRange rangeOfFragment;
 
 @end

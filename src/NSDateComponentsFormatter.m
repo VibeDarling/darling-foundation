@@ -34,7 +34,7 @@
 #include <unicode/unum.h>
 #include <unicode/ures.h>
 
-// Darling's NSDateComponents marks unset fields with INT_MAX; Apple's use NSUndefinedDateComponent.
+// Unset fields are NSUndefinedDateComponent; Darling's NSDateComponents used INT_MAX before.
 static BOOL NSDCFIsUnset(NSInteger value)
 {
     return value == INT_MAX || value == NSUndefinedDateComponent;

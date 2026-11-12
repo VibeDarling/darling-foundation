@@ -82,6 +82,7 @@ typedef const struct __CFKeyedArchiverUID* CFKeyedArchiverUIDRef;
 - (void)encodeDouble:(double)realv forKey:(NSString *)key;
 - (void)encodeBytes:(const uint8_t *)bytesp length:(NSUInteger)lenv forKey:(NSString *)key;
 
+@property (readwrite) BOOL requiresSecureCoding;
 @end
 
 typedef struct offsetDataStruct offsetDataStruct;
@@ -132,6 +133,7 @@ typedef struct offsetDataStruct offsetDataStruct;
 - (double)decodeDoubleForKey:(NSString *)key;
 - (const uint8_t *)decodeBytesForKey:(NSString *)key returnedLength:(NSUInteger *)lengthp NS_RETURNS_INNER_POINTER;
 
+@property (readwrite) BOOL requiresSecureCoding;
 @end
 
 @interface NSObject (NSKeyedArchiverObjectSubstitution)

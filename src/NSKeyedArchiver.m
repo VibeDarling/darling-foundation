@@ -580,11 +580,10 @@ static void encodeDouble(NSKeyedArchiver *archiver, double d, NSString *key)
         
         @catch (NSException *exception) {
             [child_info
-             setObject: [NSString stringWithFormat:@"%@ '%@': %@\n%@",
+             setObject: [NSString stringWithFormat:@"%@ '%@': %@",
                          @"Exception occured while archiving",
                          [object className],
-                         [exception reason],
-                         [NSThread callStackSymbols]]
+                         [exception reason]]
              forKey:NSDebugDescriptionErrorKey];
         }
     }
