@@ -416,6 +416,13 @@ static const char* uniqueString(const char* str);
    return v;
 }
 
+// Private: the underscore spelling that Grapher sends. No public document describes it. GUESS: it reads the same
+// one typedstream byte as -decodeByte and returns it unsigned.
+- (uint8_t)_decodeByte
+{
+    return [self decodeByte];
+}
+
 - (BOOL)decodeChar:(signed char*)outChar
 {
     NSParameterAssert(outChar);
